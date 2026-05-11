@@ -12,32 +12,35 @@ import type { Memory } from '../types'
 // ── Physics constants ─────────────────────────────────────────
 const CARD_W    = 82
 const CARD_H    = 82
-const MAX_SCALE = 1.32
+const MAX_SCALE = 1.30
 const MIN_SCALE = 0.28
 const LERP_SCL  = 0.036
 const LERP_ROT  = 0.09
-const BASE_SPD  = 0.20
-const SPD_VAR   = 0.22
+const BASE_SPD  = 0.00095   // ~17s per full loop
+const SPD_VAR   = 0.00055
 const HEADER_H  = 160
 const NAV_H     = 84
 
-// ── Bezier lens boundary ──────────────────────────────────────
-function bezierY(t: number, p0: number, p1: number, p2: number): number {
+// ── Circuit lane system ───────────────────────────────────────
+interface Pt { x: number; y: number }
+interface Lane { p0: Pt; p1: Pt; p2: Pt }
+
+function pathBez(t: number, p0: Pt, p1: Pt, p2: Pt): Pt {
   const u = 1 - t
-  return u * u * p0 + 2 * u * t * p1 + t * t * p2
+  return {
+    x: u*u*p0.x + 2*u*t*p1.x + t*t*p2.x,
+    y: u*u*p0.y + 2*u*t*p1.y + t*t*p2.y,
+  }
 }
 
-interface Boundary { top: (t: number) => number; bottom: (t: number) => number }
-
-function buildBoundary(H: number): Boundary {
-  const zoneTop = HEADER_H
-  const zoneBot = H - NAV_H
-  const zoneMid = (zoneTop + zoneBot) / 2
-  const squeeze = CARD_H * 0.55   // half-height of band at screen edges
-  return {
-    top:    t => bezierY(t, zoneMid - squeeze, zoneTop + 10, zoneMid - squeeze),
-    bottom: t => bezierY(t, zoneMid + squeeze, zoneBot - 10, zoneMid + squeeze),
-  }
+function buildLanes(W: number, H: number): [Lane, Lane] {
+  const mid = (HEADER_H + H - NAV_H) / 2
+  return [
+    // Lane 0: left-mid → arcs UP at center → right-mid
+    { p0:{x:-CARD_W, y:mid-CARD_H*0.6}, p1:{x:W*0.5, y:HEADER_H+8}, p2:{x:W+CARD_W, y:mid-CARD_H*0.6} },
+    // Lane 1: right-mid → arcs DOWN at center → left-mid
+    { p0:{x:W+CARD_W, y:mid+CARD_H*0.6}, p1:{x:W*0.5, y:H-NAV_H-8}, p2:{x:-CARD_W, y:mid+CARD_H*0.6} },
+  ]
 }
 
 const GLOW: readonly string[] = [
@@ -47,15 +50,6 @@ const GLOW: readonly string[] = [
 
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 
-function scaleAt(cx: number, W: number) {
-  const d = Math.abs((cx / W) - 0.5) * 2
-  return lerp(MAX_SCALE, MIN_SCALE, d * d)
-}
-
-function opacityAt(cx: number, W: number) {
-  const d = Math.abs((cx / W) - 0.5) * 2
-  return lerp(1.0, 0.36, d)
-}
 
 // ── Per-card state ────────────────────────────────────────────
 interface PhysCard {
@@ -63,7 +57,9 @@ interface PhysCard {
   el: HTMLDivElement
   inner: HTMLDivElement
   rgb: string
-  x: number; y: number; vx: number; vy: number
+  lane: 0 | 1
+  t: number        // 0..1 position along lane path
+  speed: number
   curS: number; curO: number
   rX: number; rY: number
   tRX: number; tRY: number
@@ -526,16 +522,21 @@ export async function renderTimeline(): Promise<HTMLElement> {
   // ── Build cards ───────────────────────────────────────────────
   const W = Math.min(window.innerWidth, 430)
   const H = window.innerHeight
-  const boundary = buildBoundary(H)
+  let lanes = buildLanes(W, H)
+
+  const half = Math.ceil(mems.length / 2)
 
   const cards: PhysCard[] = mems.map((m, i) => {
-    const initX = Math.random() * (W - CARD_W)
-    const t0    = (initX + CARD_W / 2) / W
-    const yTop  = boundary.top(t0)
-    const yBot  = boundary.bottom(t0)
-    const initY = yTop + Math.random() * Math.max(0, yBot - yTop - CARD_H)
-    const spd   = BASE_SPD + Math.random() * SPD_VAR
-    const ang   = Math.random() * Math.PI * 2
+    const lane  = (i < half ? 0 : 1) as 0 | 1
+    const slot  = i < half ? i : i - half
+    const cnt   = lane === 0 ? half : mems.length - half
+    const t     = cnt > 1 ? slot / cnt : 0
+    const speed = BASE_SPD + Math.random() * SPD_VAR
+
+    const pos   = pathBez(t, lanes[lane].p0, lanes[lane].p1, lanes[lane].p2)
+    const d     = Math.abs(t - 0.5) * 2
+    const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
+    const initO = lerp(1.0, 0.38, d)
 
     const el = document.createElement('div')
     el.style.cssText = `
@@ -587,8 +588,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
     el.appendChild(inner)
     canvas.appendChild(el)
 
-    const rgb  = GLOW[i % GLOW.length]
-    const initS = scaleAt(initX + CARD_W / 2, W)
+    const rgb = GLOW[i % GLOW.length]
 
     // Touch/mouse events
     const onMove = (cx: number, cy: number) => {
@@ -610,12 +610,16 @@ export async function renderTimeline(): Promise<HTMLElement> {
     el.addEventListener('touchend', onEnd)
     el.addEventListener('click', () => openDetail(m, c))
 
+    // Set initial position via transform so card appears at path position
+    const ox0 = pos.x - CARD_W / 2 - CARD_W * (initS - 1) / 2
+    const oy0 = pos.y - CARD_H / 2 - CARD_H * (initS - 1) / 2
+    el.style.transform = `translate(${ox0}px,${oy0}px) scale(${initS})`
+    el.style.opacity   = String(initO)
+
     const c: PhysCard = {
       mem: m, el, inner, rgb,
-      x: initX, y: initY,
-      vx: Math.cos(ang) * spd,
-      vy: Math.sin(ang) * spd,
-      curS: initS, curO: opacityAt(initX + CARD_W / 2, W),
+      lane, t, speed,
+      curS: initS, curO: initO,
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
     }
@@ -626,37 +630,30 @@ export async function renderTimeline(): Promise<HTMLElement> {
   let rafId = 0
 
   const tick = () => {
-    const CW = Math.min(window.innerWidth, 430)
-
     for (const c of cards) {
       if (!c.hit) {
-        c.x += c.vx; c.y += c.vy
-
-        // Left / right walls
-        if (c.x < 0)          { c.x = 0;          c.vx =  Math.abs(c.vx) }
-        if (c.x > CW - CARD_W){ c.x = CW - CARD_W; c.vx = -Math.abs(c.vx) }
-
-        // Bezier lens boundary — narrow at sides, wide at center
-        const bt   = Math.max(0, Math.min(1, (c.x + CARD_W / 2) / CW))
-        const yTop = boundary.top(bt)
-        const yBot = boundary.bottom(bt)
-        if (c.y < yTop)           { c.y = yTop;           c.vy =  Math.abs(c.vy) }
-        if (c.y + CARD_H > yBot)  { c.y = yBot - CARD_H;  c.vy = -Math.abs(c.vy) }
+        c.t = (c.t + c.speed) % 1
       }
 
-      const cx = c.x + CARD_W / 2
-      const tS = c.hit ? MAX_SCALE + 0.16 : scaleAt(cx, CW)
-      const tO = c.hit ? 1.0 : opacityAt(cx, CW)
+      // Position from bezier lane path
+      const lane = lanes[c.lane]
+      const pos  = pathBez(c.t, lane.p0, lane.p1, lane.p2)
+
+      // Scale & opacity based on t: max at center (t=0.5), min at edges
+      const d  = Math.abs(c.t - 0.5) * 2
+      const tS = c.hit ? MAX_SCALE + 0.18 : lerp(MAX_SCALE, MIN_SCALE, d * d)
+      const tO = c.hit ? 1.0 : lerp(1.0, 0.38, d)
 
       c.curS = lerp(c.curS, tS, LERP_SCL)
       c.curO = lerp(c.curO, tO, LERP_SCL)
       c.rX   = lerp(c.rX, c.tRX, LERP_ROT)
       c.rY   = lerp(c.rY, c.tRY, LERP_ROT)
 
-      c.el.style.zIndex = c.hit ? '100' : String(Math.round(c.curS * 200))
+      c.el.style.zIndex = c.hit ? '100' : String(Math.round(c.curS * 300))
 
-      const ox = c.x - CARD_W * (c.curS - 1) / 2
-      const oy = c.y - CARD_H * (c.curS - 1) / 2
+      // Center card on path point
+      const ox = pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
+      const oy = pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
 
       c.el.style.transform =
         `translate(${ox}px,${oy}px) ` +
@@ -684,10 +681,15 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
   rafId = requestAnimationFrame(tick)
 
+  // Rebuild lanes on resize (mobile orientation change)
+  const onResize = () => { lanes = buildLanes(Math.min(window.innerWidth, 430), window.innerHeight) }
+  window.addEventListener('resize', onResize)
+
   // Cleanup on unmount
   const obs = new MutationObserver(() => {
     if (!wrapper.isConnected) {
       cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', onResize)
       overlay.remove()
       obs.disconnect()
     }
