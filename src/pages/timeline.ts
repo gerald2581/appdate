@@ -85,6 +85,7 @@ function applyCardMem(c: PhysCard, m: MemWithUrl) {
       width:100%;height:100%;object-fit:cover;
       border-radius:13px;display:block;
       pointer-events:none;user-select:none;
+      image-rendering:-webkit-optimize-contrast;
     `
     c.inner.appendChild(img)
   } else {
@@ -597,14 +598,13 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
       c.el.style.zIndex = c.hit ? '9999' : String(Math.round(c.curS * 300))
 
-      const ox = pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
-      const oy = pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
+      const ox = Math.round(pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2)
+      const oy = Math.round(pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2)
 
-      c.el.style.transform =
-        `translate(${ox}px,${oy}px) ` +
-        `perspective(900px) ` +
-        `rotateX(${c.rX}deg) rotateY(${c.rY}deg) ` +
-        `scale(${c.curS})`
+      // Only apply 3D tilt when hovering to avoid motion blur from GPU 3D mode
+      c.el.style.transform = c.hit
+        ? `translate(${ox}px,${oy}px) perspective(900px) rotateX(${c.rX}deg) rotateY(${c.rY}deg) scale(${c.curS})`
+        : `translate(${ox}px,${oy}px) scale(${c.curS})`
 
       c.el.style.opacity = String(c.curO)
 
