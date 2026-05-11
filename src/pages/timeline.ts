@@ -13,7 +13,7 @@ import type { Memory } from '../types'
 const CARD_W           = 82
 const CARD_H           = 82
 const MAX_SCALE        = 1.30
-const MIN_SCALE        = 0.58
+const MIN_SCALE        = 0.28
 const LERP_SCL         = 0.022
 const LERP_ROT         = 0.07
 const SPEED            = 0.00038  // 4/10
@@ -588,7 +588,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
       // Scale & opacity: max at t=0.5 (path center = screen center), min at edges
       const d  = Math.abs(c.t - 0.5) * 2
       const tS = c.hit ? MAX_SCALE + 0.18 : lerp(MAX_SCALE, MIN_SCALE, d * d)
-      const tO = c.hit ? 1.0 : lerp(1.0, 0.70, d)
+      const tO = c.hit ? 1.0 : lerp(1.0, 0.38, d)
 
       c.curS = lerp(c.curS, tS, LERP_SCL)
       c.curO = lerp(c.curO, tO, LERP_SCL)
