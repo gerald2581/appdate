@@ -10,7 +10,7 @@ export function renderTimelineAdd(): HTMLElement {
   const { user, couple_id } = getState()
   if (!user || !couple_id) return wrapper
 
-  let selectedFile: File | null = null
+  let selectedFiles: File[] = []
 
   wrapper.innerHTML = `
     <div class="min-h-dvh bg-bg">
@@ -24,15 +24,28 @@ export function renderTimelineAdd(): HTMLElement {
 
       <form id="form" class="px-4 flex flex-col gap-5 pb-12" novalidate>
 
-        <!-- Photo picker -->
-        <label for="photo-input" class="block cursor-pointer">
-          <div id="photo-preview"
-            class="w-full h-44 rounded-2xl bg-surface-2 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-accent transition-colors overflow-hidden">
-            <span class="text-3xl opacity-30">📷</span>
-            <span class="text-xs text-ink-muted">Tap untuk tambah foto (opsional)</span>
+        <!-- Multi-photo picker -->
+        <div>
+          <label for="photo-input" class="block cursor-pointer">
+            <div id="photo-zone"
+              class="w-full min-h-[11rem] rounded-2xl bg-surface-2 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-accent transition-colors overflow-hidden p-3">
+              <span class="text-3xl opacity-30">📷</span>
+              <span class="text-xs text-ink-muted">Tap untuk pilih foto (bisa lebih dari 1)</span>
+            </div>
+            <input id="photo-input" type="file" accept="image/*" multiple class="hidden" />
+          </label>
+          <!-- Upload progress -->
+          <div id="upload-progress" class="hidden mt-3">
+            <div class="flex justify-between text-xs text-ink-muted mb-1">
+              <span id="progress-label">Mengupload...</span>
+              <span id="progress-count"></span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden">
+              <div id="progress-bar" class="h-full rounded-full transition-all duration-300"
+                   style="background:linear-gradient(90deg,#c8826a,#d4956a); width:0%"></div>
+            </div>
           </div>
-          <input id="photo-input" type="file" accept="image/*" class="hidden" />
-        </label>
+        </div>
 
         <!-- Title -->
         <div class="flex flex-col gap-1.5">
@@ -74,15 +87,34 @@ export function renderTimelineAdd(): HTMLElement {
     </div>
   `
 
-  // Photo preview handler
-  const photoInput   = wrapper.querySelector('#photo-input') as HTMLInputElement
-  const photoPreview = wrapper.querySelector('#photo-preview') as HTMLElement
+  const photoInput    = wrapper.querySelector('#photo-input') as HTMLInputElement
+  const photoZone     = wrapper.querySelector('#photo-zone') as HTMLElement
+  const progressWrap  = wrapper.querySelector('#upload-progress') as HTMLElement
+  const progressBar   = wrapper.querySelector('#progress-bar') as HTMLElement
+  const progressLabel = wrapper.querySelector('#progress-label') as HTMLElement
+  const progressCount = wrapper.querySelector('#progress-count') as HTMLElement
 
+  // Photo preview grid
   photoInput.addEventListener('change', () => {
-    selectedFile = photoInput.files?.[0] ?? null
-    if (selectedFile) {
-      const url = URL.createObjectURL(selectedFile)
-      photoPreview.innerHTML = `<img src="${url}" class="w-full h-full object-cover" />`
+    selectedFiles = Array.from(photoInput.files ?? [])
+    if (selectedFiles.length === 0) return
+
+    if (selectedFiles.length === 1) {
+      const url = URL.createObjectURL(selectedFiles[0])
+      photoZone.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-xl" />`
+    } else {
+      const cols = Math.min(selectedFiles.length, 3)
+      photoZone.innerHTML = `
+        <div class="grid gap-1.5 w-full" style="grid-template-columns: repeat(${cols}, 1fr)">
+          ${selectedFiles.map(f => {
+            const url = URL.createObjectURL(f)
+            return `<div class="aspect-square rounded-xl overflow-hidden bg-surface-2">
+              <img src="${url}" class="w-full h-full object-cover" />
+            </div>`
+          }).join('')}
+        </div>
+        <p class="text-xs text-ink-muted mt-2">${selectedFiles.length} foto dipilih</p>
+      `
     }
   })
 
@@ -95,7 +127,6 @@ export function renderTimelineAdd(): HTMLElement {
   form.addEventListener('submit', async e => {
     e.preventDefault()
     submitBtn.disabled = true
-    submitBtn.textContent = 'Menyimpan...'
     errorEl.classList.add('hidden')
 
     const title       = (wrapper.querySelector('#title') as HTMLInputElement).value.trim()
@@ -103,24 +134,71 @@ export function renderTimelineAdd(): HTMLElement {
     const date        = (wrapper.querySelector('#date') as HTMLInputElement).value
     const description = (wrapper.querySelector('#description') as HTMLTextAreaElement).value.trim()
 
+    if (!title) {
+      errorEl.textContent = 'Judul wajib diisi'
+      errorEl.classList.remove('hidden')
+      submitBtn.disabled = false
+      return
+    }
+
     try {
-      let photoPath: string | null = null
-      if (selectedFile) photoPath = await uploadPhoto(couple_id, selectedFile)
+      if (selectedFiles.length > 0) {
+        // Multi-photo upload dengan progress
+        progressWrap.classList.remove('hidden')
+        submitBtn.textContent = 'Mengupload foto...'
 
-      const { error } = await supabase.from('memories').insert({
-        couple_id,
-        title,
-        type,
-        memory_date: date,
-        description: description || null,
-        photo_path:  photoPath,
-        created_by:  user.id,
-      })
-      if (error) throw error
+        let uploaded = 0
+        const photoPaths: string[] = []
 
-      showToast('Kenangan tersimpan ✦', 'success')
+        for (const file of selectedFiles) {
+          const path = await uploadPhoto(couple_id, file, (pct) => {
+            const overall = ((uploaded + pct / 100) / selectedFiles.length) * 100
+            progressBar.style.width = `${overall.toFixed(0)}%`
+            progressLabel.textContent = `Mengupload foto ${uploaded + 1} dari ${selectedFiles.length}...`
+            progressCount.textContent = `${overall.toFixed(0)}%`
+          })
+          photoPaths.push(path)
+          uploaded++
+        }
+
+        progressBar.style.width = '100%'
+        progressLabel.textContent = 'Menyimpan kenangan...'
+        submitBtn.textContent = 'Menyimpan...'
+
+        // Simpan semua foto sebagai entries terpisah, foto pertama pakai title+description
+        const inserts = photoPaths.map((photoPath, i) => ({
+          couple_id,
+          title:       i === 0 ? title : `${title} (${i + 1})`,
+          type,
+          memory_date: date,
+          description: i === 0 ? (description || null) : null,
+          photo_path:  photoPath,
+          created_by:  user.id,
+        }))
+
+        const { error } = await supabase.from('memories').insert(inserts)
+        if (error) throw error
+
+        showToast(`${photoPaths.length} kenangan tersimpan ✦`, 'success')
+      } else {
+        // Tanpa foto
+        submitBtn.textContent = 'Menyimpan...'
+        const { error } = await supabase.from('memories').insert({
+          couple_id,
+          title,
+          type,
+          memory_date: date,
+          description: description || null,
+          photo_path:  null,
+          created_by:  user.id,
+        })
+        if (error) throw error
+        showToast('Kenangan tersimpan ✦', 'success')
+      }
+
       navigate('/timeline')
     } catch (err: unknown) {
+      progressWrap.classList.add('hidden')
       errorEl.textContent = err instanceof Error ? err.message : 'Gagal menyimpan'
       errorEl.classList.remove('hidden')
       submitBtn.disabled = false
