@@ -525,13 +525,14 @@ export async function renderTimeline(): Promise<HTMLElement> {
   let lanes = buildLanes(W, H)
 
   const half = Math.ceil(mems.length / 2)
+  // Fixed step so cards are always well-spaced regardless of photo count
+  const T_STEP = 0.14   // ~7 slots per lane; gives clear gap between each card
 
   const cards: PhysCard[] = mems.map((m, i) => {
     const lane  = (i < half ? 0 : 1) as 0 | 1
     const slot  = i < half ? i : i - half
-    const cnt   = lane === 0 ? half : mems.length - half
-    const t     = cnt > 1 ? slot / cnt : 0
-    const speed = BASE_SPD + Math.random() * SPD_VAR
+    const t     = (slot * T_STEP) % 1
+    const speed = BASE_SPD + Math.random() * SPD_VAR * 0.3   // minimal speed variance so spacing stays even
 
     const pos   = pathBez(t, lanes[lane].p0, lanes[lane].p1, lanes[lane].p2)
     const d     = Math.abs(t - 0.5) * 2
