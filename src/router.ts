@@ -20,23 +20,30 @@ async function render() {
   const handler = routes.get(path) ?? routes.get('*')
   if (!handler) return
 
-  // Await page first — old content stays visible, no layout-shifting spinner
+  // Await page first — old content stays visible during data fetch
   const el = await handler()
   if (gen !== renderGen) return
 
-  container.innerHTML = ''
-  container.appendChild(el)
+  const swap = () => {
+    container.innerHTML = ''
+    container.appendChild(el)
+  }
 
-  // Subtle fade-in so the swap doesn't feel abrupt
-  el.style.opacity = '0'
-  requestAnimationFrame(() => {
-    el.style.transition = 'opacity 0.18s ease'
-    el.style.opacity = '1'
+  if ('startViewTransition' in document) {
+    // View Transitions API — browser handles background crossfade natively
+    document.startViewTransition(swap)
+  } else {
+    // Graceful fallback: fade-in only
+    swap()
+    el.style.opacity = '0'
+    el.style.transform = 'translateY(10px)'
     requestAnimationFrame(() => {
-      // Clean up inline transition after it's done
-      setTimeout(() => { el.style.transition = '' }, 200)
+      el.style.transition = 'opacity 0.25s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)'
+      el.style.opacity = '1'
+      el.style.transform = 'translateY(0)'
+      setTimeout(() => { el.style.transition = ''; el.style.transform = '' }, 280)
     })
-  })
+  }
 }
 
 export function initRouter(el: HTMLElement) {
