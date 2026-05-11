@@ -10,13 +10,13 @@ import { showToast } from '../components/toast'
 import type { Memory } from '../types'
 
 // ── Physics constants ─────────────────────────────────────────
-const CARD_W           = 82
-const CARD_H           = 82
+const CARD_W           = 96
+const CARD_H           = 96
 const MAX_SCALE        = 1.30
-const MIN_SCALE        = 0.28
+const MIN_SCALE        = 0.42
 const LERP_SCL         = 0.022
 const LERP_ROT         = 0.07
-const SPEED            = 0.00038  // 4/10
+const SPEED            = 0.00048  // 5/10
 const HEADER_H         = 160
 const NAV_H            = 84
 const VISIBLE_PER_LANE = 8        // cards on screen per lane; rest cycle in
