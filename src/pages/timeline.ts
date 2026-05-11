@@ -20,7 +20,7 @@ const SPEED     = 0.00090   // same speed for all → spacing stays fixed
 const HEADER_H  = 160
 const NAV_H     = 84
 // Gap between cards per lane
-const T_STEP    = 0.14
+const T_STEP    = 0.10
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
