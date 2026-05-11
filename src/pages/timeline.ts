@@ -5,6 +5,8 @@ import { navigate } from '../router'
 import { formatDate } from '../lib/date-utils'
 import { getSignedUrl } from '../lib/storage'
 import { esc } from '../lib/escape'
+import { openConfirmModal } from '../components/confirm-modal'
+import { showToast } from '../components/toast'
 import type { Memory } from '../types'
 
 // ── Physics constants ─────────────────────────────────────────
@@ -172,7 +174,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
   overlay.appendChild(sheet)
   document.body.appendChild(overlay)
 
-  const openDetail = (m: Memory & { photoUrl: string | null }) => {
+  const openDetail = (m: Memory & { photoUrl: string | null }, card: PhysCard) => {
     overlay.style.pointerEvents = 'all'
     overlay.style.background = 'rgba(0,0,0,0.48)'
     sheet.style.transform = 'translateY(0)'
@@ -190,7 +192,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
         <div style="height:16px"></div>
       `}
 
-      <div style="padding:22px 24px 32px">
+      <div style="padding:22px 24px 16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#c8826a;font-weight:700">
             ${esc(typeLabel[m.type] ?? m.type)}
@@ -202,7 +204,36 @@ export async function renderTimeline(): Promise<HTMLElement> {
         </h2>
         ${m.description ? `<p style="font-size:14px;color:#6b6860;line-height:1.7">${esc(m.description)}</p>` : ''}
       </div>
+
+      <!-- Delete button -->
+      <div style="padding:0 24px 32px">
+        <button id="btn-delete-memory"
+          style="width:100%;padding:12px;border-radius:14px;border:1px solid rgba(200,100,100,0.25);
+                 background:rgba(200,100,100,0.06);color:#c87878;font-size:13px;font-weight:600;
+                 cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+          <span>🗑</span> Hapus Kenangan
+        </button>
+      </div>
     `
+
+    sheet.querySelector('#btn-delete-memory')!.addEventListener('click', () => {
+      openConfirmModal({
+        title: 'Hapus Kenangan?',
+        message: `"${m.title}" akan dihapus permanen.`,
+        confirmLabel: 'Hapus',
+        danger: true,
+        onConfirm: async () => {
+          const { error } = await supabase.from('memories').delete().eq('id', m.id)
+          if (error) throw error
+          // Hapus card dari DOM dan array
+          card.el.remove()
+          const idx = cards.indexOf(card)
+          if (idx !== -1) cards.splice(idx, 1)
+          closeDetail()
+          showToast('Kenangan dihapus', 'success')
+        },
+      })
+    })
   }
 
   const closeDetail = () => {
@@ -294,7 +325,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
       onMove(e.touches[0].clientX, e.touches[0].clientY)
     }, { passive: false })
     el.addEventListener('touchend', onEnd)
-    el.addEventListener('click', () => openDetail(m))
+    el.addEventListener('click', () => openDetail(m, c))
 
     const c: PhysCard = {
       mem: m, el, inner, rgb,
