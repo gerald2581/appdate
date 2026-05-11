@@ -16,7 +16,7 @@ const MAX_SCALE        = 1.30
 const MIN_SCALE        = 0.28
 const LERP_SCL         = 0.022
 const LERP_ROT         = 0.07
-const SPEED            = 0.00028  // slow & smooth
+const SPEED            = 0.00038  // 4/10
 const HEADER_H         = 160
 const NAV_H            = 84
 const VISIBLE_PER_LANE = 8        // cards on screen per lane; rest cycle in
@@ -595,7 +595,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
       c.rX   = lerp(c.rX, c.tRX, LERP_ROT)
       c.rY   = lerp(c.rY, c.tRY, LERP_ROT)
 
-      c.el.style.zIndex = c.hit ? '100' : String(Math.round(c.curS * 300))
+      c.el.style.zIndex = c.hit ? '9999' : String(Math.round(c.curS * 300))
 
       const ox = pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
       const oy = pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
