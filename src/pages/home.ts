@@ -76,57 +76,43 @@ export async function renderHome(): Promise<HTMLElement> {
   const partnerFirst   = partner ? partner.name.split(' ')[0] : 'Partner'
 
   wrapper.innerHTML = `
-    <div style="min-height:100dvh; padding-bottom:calc(72px + 16px)">
+    <div class="min-h-dvh pb-[calc(64px+1.5rem)]">
 
-      <!-- Hero glass card — top section -->
-      <div style="padding: calc(env(safe-area-inset-top,0px) + 24px) 16px 16px">
-        <div class="glass-strong" style="padding:24px; text-align:center">
+      <!-- Hero glass card -->
+      <div class="px-4 pt-safe-10 pb-4">
+        <div class="glass-strong px-6 py-8 text-center">
 
-          <!-- Partner avatars — 8px gap system -->
-          <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:24px">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-              <div style="
-                width:56px;height:56px;border-radius:50%;
-                display:flex;align-items:center;justify-content:center;
-                color:white;font-size:20px;font-weight:600;
-                background:linear-gradient(135deg,#c8826a,#d4956a);
-                border:2px solid rgba(255,255,255,0.80);
-                box-shadow:0 4px 16px rgba(200,130,106,0.28);
-                user-select:none;
-              ">${myInitial}</div>
-              <span style="font-size:11px;color:#6b6860;font-weight:500;letter-spacing:0.04em">${myFirst}</span>
+          <!-- Partner avatars -->
+          <div class="flex items-center justify-center gap-4 mb-6">
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-semibold shadow-lg select-none"
+                   style="background: linear-gradient(135deg, #c8826a, #d4956a)">
+                ${myInitial}
+              </div>
+              <span class="text-xs text-ink-muted font-medium">${myFirst}</span>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;padding-bottom:20px;color:#c8826a;opacity:0.55">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(200,130,106,0.15)" stroke="#c8826a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
+            <div class="flex flex-col items-center gap-1 pb-5">
+              <span class="text-2xl" style="color:#c8826a; opacity:0.6">♡</span>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-              <div style="
-                width:56px;height:56px;border-radius:50%;
-                display:flex;align-items:center;justify-content:center;
-                color:white;font-size:20px;font-weight:600;
-                background:linear-gradient(135deg,#7a9ec8,#8badd4);
-                border:2px solid rgba(255,255,255,0.80);
-                box-shadow:0 4px 16px rgba(122,158,200,0.28);
-                user-select:none;
-              ">${partnerInitial}</div>
-              <span style="font-size:11px;color:#6b6860;font-weight:500;letter-spacing:0.04em">${partnerFirst}</span>
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-semibold shadow-lg select-none"
+                   style="background: linear-gradient(135deg, #7a9ec8, #8badd4)">
+                ${partnerInitial}
+              </div>
+              <span class="text-xs text-ink-muted font-medium">${partnerFirst}</span>
             </div>
           </div>
 
-          <!-- Timer label -->
-          <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#9a9088;font-weight:600;margin-bottom:16px">Bersama selama</p>
+          <!-- Real-time timer -->
+          <p class="text-[10px] uppercase tracking-[0.2em] text-ink-muted mb-4">Bersama selama</p>
 
           ${user.relationship_start ? `
-            <div id="timer-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px">
-              <p style="font-size:11px;color:#9a9088">Sejak ${formatDate(user.relationship_start)}</p>
-              <button id="btn-edit-date" title="Edit tanggal mulai" style="
-                border:none;background:transparent;cursor:pointer;padding:4px;
-                border-radius:50%;color:#c8826a;display:flex;align-items:center;
-                transition:opacity 0.15s;
-              ">
+            <div id="timer-grid" class="grid grid-cols-4 gap-2 mb-3"></div>
+            <div class="flex items-center justify-center gap-2">
+              <p class="text-xs text-ink-muted">Sejak ${formatDate(user.relationship_start)}</p>
+              <button id="btn-edit-date" title="Edit tanggal mulai"
+                class="border-none bg-transparent cursor-pointer p-1 rounded-full transition-opacity hover:opacity-60 active:scale-90"
+                style="color:#c8826a">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -134,15 +120,10 @@ export async function renderHome(): Promise<HTMLElement> {
               </button>
             </div>
           ` : `
-            <p style="font-family:'Playfair Display',Georgia,serif;font-size:2.5rem;color:#1a1916;margin-bottom:12px">—</p>
-            <button id="btn-set-date" style="
-              display:inline-flex;align-items:center;gap:6px;
-              font-size:12px;border:none;background:rgba(200,130,106,0.10);
-              cursor:pointer;padding:8px 16px;border-radius:999px;
-              color:#c8826a;font-family:inherit;
-              border:1px solid rgba(200,130,106,0.20);
-              transition:opacity 0.15s;
-            ">
+            <p class="text-4xl font-display text-ink mb-3">—</p>
+            <button id="btn-set-date"
+              class="inline-flex items-center gap-1.5 text-xs border-none bg-transparent cursor-pointer px-3 py-1.5 rounded-full transition-all hover:opacity-80"
+              style="color:#c8826a; background:rgba(200,130,106,0.1)">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
@@ -153,29 +134,29 @@ export async function renderHome(): Promise<HTMLElement> {
       </div>
 
       <!-- Quick actions -->
-      <div style="padding:0 16px 16px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          ${quickCard(svgCamera, 'Tambah Kenangan',  '/timeline/add')}
-          ${quickCard(svgPlanner,'Rencanakan Kencan', '/planner/add')}
-          ${quickCard(svgChat,   'Kirim Pesan',       '/chat')}
-          ${quickCard(svgPin,    'Cek Lokasi',        '/location')}
+      <div class="px-4 mb-4">
+        <div class="grid grid-cols-2 gap-3">
+          ${quickCard(svgCamera, 'Tambah Kenangan',   '/timeline/add')}
+          ${quickCard(svgPlanner,'Rencanakan Kencan',  '/planner/add')}
+          ${quickCard(svgChat,   'Kirim Pesan',        '/chat')}
+          ${quickCard(svgPin,    'Cek Lokasi',         '/location')}
         </div>
       </div>
 
       <!-- Upcoming special dates -->
       ${upcoming.length > 0 ? `
-        <div style="padding:0 16px 16px">
-          <div class="section-label">Tanggal Spesial</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="px-4 mb-4">
+          <p class="text-[10px] uppercase tracking-[0.15em] text-ink-muted font-medium mb-3">Tanggal Spesial</p>
+          <div class="flex flex-col gap-2">
             ${upcoming.map(sd => `
-              <div class="glass" style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+              <div class="glass px-4 py-3.5 flex justify-between items-center">
                 <div>
-                  <p style="font-size:13px;font-weight:500;color:#1a1916;margin-bottom:3px">${sd.title}</p>
-                  <p style="font-size:11px;color:#6b6860">
+                  <p class="text-sm font-medium text-ink">${sd.title}</p>
+                  <p class="text-xs text-ink-muted mt-0.5">
                     ${sd.nextDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
                   </p>
                 </div>
-                <span style="font-size:11px;font-weight:700;color:${sd.daysLeft === 0 ? '#6ab87a' : '#c8826a'};letter-spacing:0.02em">
+                <span class="text-xs font-semibold" style="color:${sd.daysLeft === 0 ? '#6ab87a' : '#c8826a'}">
                   ${sd.daysLeft === 0 ? 'Hari ini! 🎉' : `${sd.daysLeft}h lagi`}
                 </span>
               </div>
@@ -185,10 +166,10 @@ export async function renderHome(): Promise<HTMLElement> {
       ` : ''}
 
       <!-- Recent memories -->
-      <div style="padding:0 16px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="section-label" style="margin-bottom:0">Kenangan Terbaru</div>
-          ${memories.length > 0 ? `<button id="see-all" style="font-size:11px;border:none;background:transparent;cursor:pointer;font-weight:600;color:#c8826a;font-family:inherit;padding:0">Lihat semua</button>` : ''}
+      <div class="px-4">
+        <div class="flex justify-between items-center mb-3">
+          <p class="text-[10px] uppercase tracking-[0.15em] text-ink-muted font-medium">Kenangan Terbaru</p>
+          ${memories.length > 0 ? `<button id="see-all" class="text-xs border-none bg-transparent cursor-pointer font-medium" style="color:#c8826a">Lihat semua</button>` : ''}
         </div>
 
         ${memoriesWithUrls.length === 0 ? `
@@ -275,53 +256,50 @@ export async function renderHome(): Promise<HTMLElement> {
 function timerUnit(value: string, label: string): string {
   return `
     <div style="
-      display:flex;flex-direction:column;align-items:center;gap:5px;
-      border-radius:16px;padding:16px 8px;
-      background:linear-gradient(155deg,rgba(255,255,255,0.74) 0%,rgba(255,236,224,0.50) 50%,rgba(255,220,204,0.36) 100%);
-      backdrop-filter:blur(24px) saturate(1.9) brightness(1.04);
-      -webkit-backdrop-filter:blur(24px) saturate(1.9) brightness(1.04);
-      border:1px solid rgba(255,255,255,0.80);
-      outline:1px solid rgba(200,130,106,0.12);
-      outline-offset:-1px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      border-radius: 18px; padding: 14px 6px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.76) 0%, rgba(255,238,228,0.52) 50%, rgba(255,224,208,0.38) 100%);
+      backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+      -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+      border: 1px solid rgba(255,255,255,0.82);
       box-shadow:
-        0 4px 18px rgba(200,130,106,0.11),
-        0 1px 4px rgba(0,0,0,0.04),
-        inset 0 1.5px 0 rgba(255,255,255,0.94);
+        0 6px 22px rgba(200,130,106,0.13),
+        0 2px 6px rgba(200,130,106,0.08),
+        0 1px 2px rgba(0,0,0,0.04),
+        inset 0 1.5px 0 rgba(255,255,255,0.94),
+        inset 0 -1px 2px rgba(200,130,106,0.07);
     ">
-      <span style="font-family:'Playfair Display',Georgia,serif;font-weight:600;color:#1a1916;line-height:1;font-size:clamp(1.25rem,5.5vw,1.75rem)">${value}</span>
-      <span style="font-size:9px;text-transform:uppercase;letter-spacing:0.14em;color:#9a9088;font-weight:600">${label}</span>
+      <span style="font-family:'Playfair Display',Georgia,serif; font-weight:600; color:#1a1916; line-height:1; font-size:clamp(1.4rem,6vw,2rem)">${value}</span>
+      <span style="font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:#6b6860; font-weight:500">${label}</span>
     </div>
   `
 }
 
 function quickCard(svgEl: string, label: string, path: string): string {
   return `
-    <button data-nav="${path}" class="glass" style="
-      padding:16px;text-align:left;cursor:pointer;
-      border:none;font-family:inherit;width:100%;
-      transition:transform 0.15s,box-shadow 0.15s;
-      active:scale-[0.97];
-    " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
+    <button data-nav="${path}"
+      class="glass p-4 text-left cursor-pointer select-none
+             hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150">
       <span style="
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        width:52px;height:52px;
-        border-radius:16px;
-        margin-bottom:12px;
-        color:#c8826a;
-        background:linear-gradient(145deg,rgba(255,255,255,0.72) 0%,rgba(255,240,232,0.48) 100%);
-        backdrop-filter:blur(20px) saturate(1.8);
-        -webkit-backdrop-filter:blur(20px) saturate(1.8);
-        border:1px solid rgba(255,255,255,0.84);
-        outline:1px solid rgba(200,130,106,0.10);
-        outline-offset:-1px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 54px; height: 54px;
+        border-radius: 17px;
+        margin-bottom: 12px;
+        color: #c8826a;
+        background: linear-gradient(145deg, rgba(255,255,255,0.74) 0%, rgba(255,242,234,0.50) 50%, rgba(255,228,212,0.34) 100%);
+        backdrop-filter: blur(22px) saturate(1.9) brightness(1.04);
+        -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.04);
+        border: 1px solid rgba(255,255,255,0.84);
         box-shadow:
-          0 4px 16px rgba(200,130,106,0.12),
-          0 1px 4px rgba(0,0,0,0.04),
-          inset 0 1.5px 0 rgba(255,255,255,0.94);
+          0 6px 22px rgba(200,130,106,0.13),
+          0 2px 7px rgba(200,130,106,0.07),
+          0 1px 2px rgba(0,0,0,0.04),
+          inset 0 1.5px 0 rgba(255,255,255,0.94),
+          inset 0 -1px 2px rgba(200,130,106,0.06);
       ">${svgEl}</span>
-      <span style="font-size:13px;font-weight:500;color:#1a1916;line-height:1.35;display:block">${label}</span>
+      <span class="text-[13px] font-medium text-ink leading-snug block">${label}</span>
     </button>
   `
 }
@@ -378,29 +356,28 @@ function renderSoloHome(name: string): HTMLElement {
 
 function featureRow(svgEl: string, title: string, desc: string): string {
   return `
-    <div class="glass" style="padding:12px 16px;display:flex;align-items:center;gap:16px">
+    <div class="glass px-4 py-3 flex items-center gap-3">
       <span style="
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        flex-shrink:0;
-        width:44px;height:44px;
-        border-radius:14px;
-        color:#c8826a;
-        background:linear-gradient(145deg,rgba(255,255,255,0.70) 0%,rgba(255,240,232,0.46) 100%);
-        backdrop-filter:blur(18px) saturate(1.8);
-        -webkit-backdrop-filter:blur(18px) saturate(1.8);
-        border:1px solid rgba(255,255,255,0.82);
-        outline:1px solid rgba(200,130,106,0.10);
-        outline-offset:-1px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 44px; height: 44px;
+        border-radius: 14px;
+        color: #c8826a;
+        background: linear-gradient(145deg, rgba(255,255,255,0.72) 0%, rgba(255,242,234,0.48) 100%);
+        backdrop-filter: blur(18px) saturate(1.8);
+        -webkit-backdrop-filter: blur(18px) saturate(1.8);
+        border: 1px solid rgba(255,255,255,0.82);
         box-shadow:
-          0 3px 12px rgba(200,130,106,0.10),
+          0 4px 14px rgba(200,130,106,0.11),
           0 1px 3px rgba(0,0,0,0.04),
-          inset 0 1.5px 0 rgba(255,255,255,0.92);
+          inset 0 1.5px 0 rgba(255,255,255,0.92),
+          inset 0 -0.5px 1px rgba(200,130,106,0.06);
       ">${svgEl}</span>
       <div>
-        <p style="font-size:13px;font-weight:500;color:#1a1916;margin-bottom:2px">${title}</p>
-        <p style="font-size:11px;color:#6b6860;line-height:1.4">${desc}</p>
+        <p class="text-sm font-medium text-ink">${title}</p>
+        <p class="text-xs text-ink-muted">${desc}</p>
       </div>
     </div>
   `
