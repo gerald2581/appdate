@@ -22,8 +22,9 @@ const LERP_R           = 0.08
 const SPEED            = 0.00042
 // Duration of one full circuit in ms — used to sync position across devices
 const CYCLE_MS         = Math.round(1000 / (SPEED * 60))
-const HEADER_H         = 160
-const NAV_H            = 84
+const HEADER_H         = 128  // actual rendered header height
+const NAV_H            = 68   // actual rendered nav height
+const CIRCUIT_PAD      = 28   // equal gap from header-bottom and nav-top
 const VISIBLE_PER_LANE = 7
 
 const GLOW: readonly string[] = [
@@ -44,18 +45,18 @@ function bezAt(t: number, { p0, p1, p2 }: Lane): Pt {
 }
 
 function buildLanes(W: number, H: number): [Lane, Lane] {
-  const mid  = (HEADER_H + H - NAV_H) / 2
-  const gap  = CARD_H * 0.55
-  const topY = HEADER_H + 24
-  const botY = H - NAV_H - 24
+  const areaTop = HEADER_H + CIRCUIT_PAD       // equal gap below header
+  const areaBot = H - NAV_H - CIRCUIT_PAD      // equal gap above nav
+  const mid     = (areaTop + areaBot) / 2      // true center of circuit area
+  const gap     = CARD_H * 0.55
   return [
-    // Lane 0: left→right, arcs UP at center
+    // Lane 0: arcs UP to areaTop
     { p0: { x: -CARD_W,    y: mid - gap },
-      p1: { x: W * 0.5,    y: topY      },
+      p1: { x: W * 0.5,    y: areaTop   },
       p2: { x: W + CARD_W, y: mid - gap } },
-    // Lane 1: left→right, arcs DOWN at center
+    // Lane 1: arcs DOWN to areaBot
     { p0: { x: -CARD_W,    y: mid + gap },
-      p1: { x: W * 0.5,    y: botY      },
+      p1: { x: W * 0.5,    y: areaBot   },
       p2: { x: W + CARD_W, y: mid + gap } },
   ]
 }
