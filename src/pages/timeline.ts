@@ -430,14 +430,19 @@ export async function renderTimeline(): Promise<HTMLElement> {
   let lanes = buildLanes(W, H)
 
   // Interleave mems across two lane queues
-  const queues: [MemWithUrl[], MemWithUrl[]] = [[], []]
-  mems.forEach((m, i) => queues[(i % 2) as 0 | 1].push(m))
+  const laneQueues: [MemWithUrl[], MemWithUrl[]] = [[], []]
+  mems.forEach((m, i) => laneQueues[(i % 2) as 0 | 1].push(m))
 
   const allCards: Card[] = []
 
-  const makeCard = (queue: MemWithUrl[], slot: number, laneId: 0 | 1): Card => {
-    const count = Math.min(VISIBLE_PER_LANE, queue.length)
-    const t     = count > 1 ? slot / count : 0.25
+  // Each card gets its own sub-queue (every count-th photo starting at slot)
+  // so all photos are shown without overlap between cards
+  const makeSubQueue = (full: MemWithUrl[], slot: number, count: number): MemWithUrl[] =>
+    full.filter((_, i) => i % count === slot)
+
+  // subQueue: this card's unique photo set; slot: position index; totalCount: cards in this lane
+  const makeCard = (subQueue: MemWithUrl[], slot: number, totalCount: number, laneId: 0 | 1): Card => {
+    const t     = totalCount > 1 ? slot / totalCount : 0.25
     const pos   = bezAt(t, lanes[laneId])
     const d     = Math.abs(t - 0.5) * 2
     const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
@@ -475,11 +480,11 @@ export async function renderTimeline(): Promise<HTMLElement> {
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
       rgb: GLOW[slot % GLOW.length],
-      queue, qIdx: slot,
+      queue: subQueue, qIdx: 0,
       get mem() { return this.queue[this.qIdx] },
     }
 
-    applyMem(card, queue[slot])
+    applyMem(card, subQueue[0])
 
     const onMove = (cx: number, cy: number) => {
       card.hit = true
@@ -504,10 +509,10 @@ export async function renderTimeline(): Promise<HTMLElement> {
   }
 
   for (let lane = 0 as 0 | 1; lane < 2; lane++) {
-    const q     = queues[lane]
+    const q     = laneQueues[lane]
     const count = Math.min(VISIBLE_PER_LANE, q.length)
     for (let slot = 0; slot < count; slot++) {
-      allCards.push(makeCard(q, slot, lane))
+      allCards.push(makeCard(makeSubQueue(q, slot, count), slot, count, lane))
     }
   }
 
