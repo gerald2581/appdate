@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import { getState } from '../store/state'
 import { renderNav } from '../components/nav'
 import { formatRelative } from '../lib/date-utils'
+import { esc } from '../lib/escape'
 import type { Message, BroadcastMessage } from '../types'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -19,8 +20,8 @@ export async function renderChat(): Promise<HTMLElement> {
 
   const history = ((data ?? []) as Message[]).reverse()
 
-  const partnerInitial = partner ? partner.name.charAt(0).toUpperCase() : '?'
-  const partnerName    = partner?.name ?? 'Partner'
+  const partnerInitial = partner ? esc(partner.name.charAt(0).toUpperCase()) : '?'
+  const partnerName    = esc(partner?.name ?? 'Partner')
 
   wrapper.innerHTML = `
     <div class="flex flex-col bg-bg" style="height:100dvh">
@@ -151,7 +152,7 @@ function bubble(content: string, isMe: boolean, timestamp: string): string {
                     ? 'bg-ink text-bg rounded-2xl rounded-br-sm'
                     : 'bg-surface border border-border text-ink rounded-2xl rounded-bl-sm'
                   }">
-        ${content}
+        ${esc(content)}
       </div>
       <span class="text-[10px] text-ink-muted px-1">${formatRelative(timestamp)}</span>
     </div>

@@ -4,6 +4,7 @@ import { renderNav } from '../components/nav'
 import { navigate } from '../router'
 import { formatDate } from '../lib/date-utils'
 import { getSignedUrl } from '../lib/storage'
+import { esc } from '../lib/escape'
 import type { Memory } from '../types'
 
 // ── Physics constants ─────────────────────────────────────────
@@ -183,7 +184,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
       ${m.photoUrl ? `
         <div style="width:100%;height:260px;overflow:hidden;margin-top:16px">
-          <img src="${m.photoUrl}" style="width:100%;height:100%;object-fit:cover" alt="${m.title}" />
+          <img src="${esc(m.photoUrl)}" style="width:100%;height:100%;object-fit:cover" alt="${esc(m.title)}" />
         </div>
       ` : `
         <div style="height:16px"></div>
@@ -192,14 +193,14 @@ export async function renderTimeline(): Promise<HTMLElement> {
       <div style="padding:22px 24px 32px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#c8826a;font-weight:700">
-            ${typeLabel[m.type] ?? m.type}
+            ${esc(typeLabel[m.type] ?? m.type)}
           </span>
-          <time style="font-size:11px;color:#9a9088">${formatDate(m.memory_date)}</time>
+          <time style="font-size:11px;color:#9a9088">${esc(formatDate(m.memory_date))}</time>
         </div>
         <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#1a1916;line-height:1.25;margin-bottom:${m.description ? '10px' : '0'}">
-          ${m.title}
+          ${esc(m.title)}
         </h2>
-        ${m.description ? `<p style="font-size:14px;color:#6b6860;line-height:1.7">${m.description}</p>` : ''}
+        ${m.description ? `<p style="font-size:14px;color:#6b6860;line-height:1.7">${esc(m.description)}</p>` : ''}
       </div>
     `
   }
@@ -258,12 +259,14 @@ export async function renderTimeline(): Promise<HTMLElement> {
         padding:10px;text-align:center;
         background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
       `
-      txt.innerHTML = `
-        <span style="font-size:18px;margin-bottom:5px;opacity:.7">✦</span>
-        <span style="font-size:8.5px;font-weight:700;color:#c8826a;text-transform:uppercase;letter-spacing:.09em;line-height:1.35">
-          ${m.title.length > 18 ? m.title.slice(0, 18) + '…' : m.title}
-        </span>
-      `
+      const iconSpan = document.createElement('span')
+      iconSpan.style.cssText = 'font-size:18px;margin-bottom:5px;opacity:.7'
+      iconSpan.textContent = '✦'
+      const titleSpan = document.createElement('span')
+      titleSpan.style.cssText = 'font-size:8.5px;font-weight:700;color:#c8826a;text-transform:uppercase;letter-spacing:.09em;line-height:1.35'
+      titleSpan.textContent = m.title.length > 18 ? m.title.slice(0, 18) + '…' : m.title
+      txt.appendChild(iconSpan)
+      txt.appendChild(titleSpan)
       inner.appendChild(txt)
     }
 

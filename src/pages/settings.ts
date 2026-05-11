@@ -8,6 +8,7 @@ import { openConfirmModal } from '../components/confirm-modal'
 import { showToast } from '../components/toast'
 import { navigate } from '../router'
 import { daysSince } from '../lib/date-utils'
+import { esc } from '../lib/escape'
 import type { SpecialDate } from '../types'
 
 function toDatetimeLocal(iso: string | null): string {
@@ -74,8 +75,8 @@ export async function renderSettings(): Promise<HTMLElement> {
                 class="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-semibold select-none overflow-hidden"
                 style="background: linear-gradient(135deg,#c8826a,#d4956a); box-shadow: 0 8px 24px rgba(200,130,106,0.4)">
                 ${avatarUrl
-                  ? `<img src="${avatarUrl}" class="w-full h-full object-cover" />`
-                  : user.name.charAt(0).toUpperCase()
+                  ? `<img src="${esc(avatarUrl)}" class="w-full h-full object-cover" />`
+                  : esc(user.name.charAt(0).toUpperCase())
                 }
               </div>
               <!-- Edit badge -->
@@ -94,7 +95,7 @@ export async function renderSettings(): Promise<HTMLElement> {
               <input id="profile-name"
                 class="w-full bg-transparent border-none outline-none font-display text-xl font-semibold leading-tight mb-1 p-0"
                 style="color:#1a1916; border-bottom: 1.5px solid rgba(200,130,106,0.2); padding-bottom: 4px;"
-                value="${user.name}" maxlength="50" />
+                value="${esc(user.name)}" maxlength="50" />
               <p id="user-email" class="text-xs truncate" style="color:#9a9088">Memuat...</p>
             </div>
           </div>
@@ -121,10 +122,10 @@ export async function renderSettings(): Promise<HTMLElement> {
                  style="background: linear-gradient(135deg,rgba(122,158,200,0.12),rgba(122,158,200,0.06)); border:1px solid rgba(122,158,200,0.2)">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
                    style="background: linear-gradient(135deg,#7a9ec8,#8badd4); box-shadow:0 4px 12px rgba(122,158,200,0.35)">
-                ${partner.name.charAt(0).toUpperCase()}
+                ${esc(partner.name.charAt(0).toUpperCase())}
               </div>
               <div class="flex-1">
-                <p class="text-sm font-semibold" style="color:#1a1916">${partner.name}</p>
+                <p class="text-sm font-semibold" style="color:#1a1916">${esc(partner.name)}</p>
                 <p class="text-xs" style="color:#9a9088">Partner kamu ♡</p>
               </div>
               <div class="w-2 h-2 rounded-full" style="background:#6ab87a; box-shadow:0 0 6px rgba(106,184,122,0.5)"></div>
@@ -252,7 +253,7 @@ export async function renderSettings(): Promise<HTMLElement> {
                   ${TYPE_ICON[sd.type] ?? '◎'}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold leading-none mb-1" style="color:#1a1916">${sd.title}</p>
+                  <p class="text-sm font-semibold leading-none mb-1" style="color:#1a1916">${esc(sd.title)}</p>
                   <div class="flex items-center gap-2">
                     <p class="text-xs" style="color:#9a9088">
                       ${new Date(sd.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
@@ -266,7 +267,7 @@ export async function renderSettings(): Promise<HTMLElement> {
                 <div class="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0" style="color:#9a9088; background:rgba(0,0,0,0.04)">
                   ${TYPE_LABEL[sd.type] ?? 'Lainnya'}
                 </div>
-                <button data-delete-sd="${sd.id}"
+                <button data-delete-sd="${esc(sd.id)}"
                   class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 border-none cursor-pointer transition-opacity hover:opacity-60"
                   style="background:rgba(200,100,100,0.1); color:#c87878; font-size:16px; line-height:1">×</button>
               </div>
@@ -284,7 +285,7 @@ export async function renderSettings(): Promise<HTMLElement> {
           <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:#9a9088">Ganti Password</p>
           <div class="flex flex-col gap-2">
             <input id="new-password" class="field py-2.5 text-sm"
-              type="password" placeholder="Password baru (min. 6 karakter)" minlength="6" />
+              type="password" placeholder="Password baru (min. 8 karakter)" minlength="8" />
             <input id="confirm-password" class="field py-2.5 text-sm"
               type="password" placeholder="Ulangi password baru" />
           </div>

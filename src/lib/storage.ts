@@ -3,8 +3,21 @@ import { supabase } from './supabase'
 const BUCKET = 'memories'
 const SIGNED_URL_TTL = 3600 // 1 hour
 
+const ALLOWED_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png':  'png',
+  'image/webp': 'webp',
+  'image/gif':  'gif',
+}
+
+function validateImage(file: File) {
+  if (!ALLOWED_TYPES[file.type]) throw new Error('Hanya JPEG, PNG, WebP, atau GIF yang diizinkan')
+  if (file.size > 10 * 1024 * 1024) throw new Error('Ukuran file maksimal 10MB')
+}
+
 export async function uploadPhoto(coupleId: string, file: File): Promise<string> {
-  const ext = file.name.split('.').pop() ?? 'jpg'
+  validateImage(file)
+  const ext  = ALLOWED_TYPES[file.type]
   const path = `${coupleId}/${crypto.randomUUID()}.${ext}`
 
   const compressed = await compressImage(file)
@@ -34,7 +47,8 @@ export async function deletePhoto(path: string) {
 const AVATAR_BUCKET = 'avatars'
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
-  const ext  = file.name.split('.').pop() ?? 'jpg'
+  validateImage(file)
+  const ext  = ALLOWED_TYPES[file.type]
   const path = `${userId}/avatar.${ext}`
 
   const compressed = await compressImage(file)

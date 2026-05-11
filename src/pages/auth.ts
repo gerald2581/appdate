@@ -52,7 +52,7 @@ export function renderAuth(): HTMLElement {
           <div class="flex flex-col gap-1.5">
             <label class="text-xs font-medium text-ink-muted uppercase tracking-wider" for="password">Password</label>
             <input id="password" class="field" type="password" placeholder="••••••••"
-              autocomplete="${isLogin ? 'current-password' : 'new-password'}" required minlength="6" />
+              autocomplete="${isLogin ? 'current-password' : 'new-password'}" required minlength="8" />
           </div>
 
           <p id="auth-error" class="text-sm hidden rounded-xl px-3 py-2" style="background:rgba(200,120,120,0.12); color:#b85a5a"></p>
