@@ -16,13 +16,29 @@ const MAX_SCALE = 1.32
 const MIN_SCALE = 0.28
 const LERP_SCL  = 0.036
 const LERP_ROT  = 0.09
-const BASE_SPD  = 0.0048  // time increment per frame
-const SPD_VAR   = 0.0028  // variance so cards don't sync up
+const BASE_SPD  = 0.20
+const SPD_VAR   = 0.22
 const HEADER_H  = 160
 const NAV_H     = 84
 
-// Lissajous frequency ratios (wx:wy) — creates figure-8 / circuit-line paths
-const LJ_RATIOS: [number, number][] = [[1, 2], [2, 1], [1, 3], [3, 2], [2, 3], [1, 1]]
+// ── Bezier lens boundary ──────────────────────────────────────
+function bezierY(t: number, p0: number, p1: number, p2: number): number {
+  const u = 1 - t
+  return u * u * p0 + 2 * u * t * p1 + t * t * p2
+}
+
+interface Boundary { top: (t: number) => number; bottom: (t: number) => number }
+
+function buildBoundary(H: number): Boundary {
+  const zoneTop = HEADER_H
+  const zoneBot = H - NAV_H
+  const zoneMid = (zoneTop + zoneBot) / 2
+  const squeeze = CARD_H * 0.55   // half-height of band at screen edges
+  return {
+    top:    t => bezierY(t, zoneMid - squeeze, zoneTop + 10, zoneMid - squeeze),
+    bottom: t => bezierY(t, zoneMid + squeeze, zoneBot - 10, zoneMid + squeeze),
+  }
+}
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
@@ -47,14 +63,7 @@ interface PhysCard {
   el: HTMLDivElement
   inner: HTMLDivElement
   rgb: string
-  // Lissajous orbit params
-  cx: number; cy: number   // orbit center (card-center coords)
-  rx: number; ry: number   // orbit radii
-  wx: number; wy: number   // frequency ratios
-  px: number; py: number   // phase offsets
-  spd: number; t: number   // speed + current time
-  // Rendered position (top-left of card)
-  x: number; y: number
+  x: number; y: number; vx: number; vy: number
   curS: number; curO: number
   rX: number; rY: number
   tRX: number; tRY: number
@@ -517,29 +526,16 @@ export async function renderTimeline(): Promise<HTMLElement> {
   // ── Build cards ───────────────────────────────────────────────
   const W = Math.min(window.innerWidth, 430)
   const H = window.innerHeight
+  const boundary = buildBoundary(H)
 
   const cards: PhysCard[] = mems.map((m, i) => {
-    // Orbit size — wide horizontal sweep, gentle vertical wave
-    const rx = (W - CARD_W) * (0.22 + Math.random() * 0.26)
-    const ry = Math.max(0, H - HEADER_H - NAV_H - CARD_H) * (0.10 + Math.random() * 0.22)
-
-    // Center must keep card inside safe zone at all points in orbit
-    const cxMin = CARD_W / 2 + rx
-    const cxMax = W - CARD_W / 2 - rx
-    const cyMin = HEADER_H + CARD_H / 2 + ry
-    const cyMax = H - NAV_H - CARD_H / 2 - ry
-
-    const cx  = cxMax > cxMin ? cxMin + Math.random() * (cxMax - cxMin) : W / 2
-    const cy  = cyMax > cyMin ? cyMin + Math.random() * (cyMax - cyMin) : HEADER_H + (H - HEADER_H - NAV_H) / 2
-
-    const [wx, wy] = LJ_RATIOS[i % LJ_RATIOS.length]
-    const px  = Math.random() * Math.PI * 2
-    const py  = Math.random() * Math.PI * 2
-    const spd = BASE_SPD + Math.random() * SPD_VAR
-    const t   = Math.random() * Math.PI * 4   // random start in orbit
-
-    const initX = cx + rx * Math.cos(wx * t + px) - CARD_W / 2
-    const initY = cy + ry * Math.sin(wy * t + py) - CARD_H / 2
+    const initX = Math.random() * (W - CARD_W)
+    const t0    = (initX + CARD_W / 2) / W
+    const yTop  = boundary.top(t0)
+    const yBot  = boundary.bottom(t0)
+    const initY = yTop + Math.random() * Math.max(0, yBot - yTop - CARD_H)
+    const spd   = BASE_SPD + Math.random() * SPD_VAR
+    const ang   = Math.random() * Math.PI * 2
 
     const el = document.createElement('div')
     el.style.cssText = `
@@ -616,8 +612,9 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
     const c: PhysCard = {
       mem: m, el, inner, rgb,
-      cx, cy, rx, ry, wx, wy, px, py, spd, t,
       x: initX, y: initY,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
       curS: initS, curO: opacityAt(initX + CARD_W / 2, W),
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
@@ -633,9 +630,18 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
     for (const c of cards) {
       if (!c.hit) {
-        c.t += c.spd
-        c.x = c.cx + c.rx * Math.cos(c.wx * c.t + c.px) - CARD_W / 2
-        c.y = c.cy + c.ry * Math.sin(c.wy * c.t + c.py) - CARD_H / 2
+        c.x += c.vx; c.y += c.vy
+
+        // Left / right walls
+        if (c.x < 0)          { c.x = 0;          c.vx =  Math.abs(c.vx) }
+        if (c.x > CW - CARD_W){ c.x = CW - CARD_W; c.vx = -Math.abs(c.vx) }
+
+        // Bezier lens boundary — narrow at sides, wide at center
+        const bt   = Math.max(0, Math.min(1, (c.x + CARD_W / 2) / CW))
+        const yTop = boundary.top(bt)
+        const yBot = boundary.bottom(bt)
+        if (c.y < yTop)           { c.y = yTop;           c.vy =  Math.abs(c.vy) }
+        if (c.y + CARD_H > yBot)  { c.y = yBot - CARD_H;  c.vy = -Math.abs(c.vy) }
       }
 
       const cx = c.x + CARD_W / 2
