@@ -22,23 +22,47 @@ import{n as e}from"./router-SnC_tAPp.js";var t=[{path:`/timeline`,icon:`✦`,lab
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 4px;
       padding: 8px 0;
       border: none;
       background: transparent;
       cursor: pointer;
       color: ${a?`#c8826a`:`#a09890`};
-      transition: color 0.15s, opacity 0.15s;
+      transition: color 0.2s;
     `,o.innerHTML=`
       <span style="
-        font-size: 18px;
-        line-height: 1;
-        display: block;
-        transform: ${a?`scale(1.15)`:`scale(1)`};
-        transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px; height: 36px;
+        font-size: 16px; line-height: 1;
+        border-radius: 12px;
+        transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        ${a?`
+          background: linear-gradient(145deg, rgba(255,232,222,0.88) 0%, rgba(255,214,196,0.62) 100%);
+          backdrop-filter: blur(20px) saturate(2.0) brightness(1.06);
+          -webkit-backdrop-filter: blur(20px) saturate(2.0) brightness(1.06);
+          border: 1px solid rgba(255,255,255,0.88);
+          box-shadow:
+            0 6px 20px rgba(200,130,106,0.22),
+            0 2px 6px rgba(200,130,106,0.12),
+            inset 0 1.5px 0 rgba(255,255,255,0.96),
+            inset 0 -1px 2px rgba(200,130,106,0.10);
+          transform: scale(1.08) translateY(-1px);
+        `:`
+          background: linear-gradient(145deg, rgba(255,255,255,0.60) 0%, rgba(255,248,244,0.36) 100%);
+          backdrop-filter: blur(16px) saturate(1.6);
+          -webkit-backdrop-filter: blur(16px) saturate(1.6);
+          border: 1px solid rgba(255,255,255,0.68);
+          box-shadow:
+            0 2px 8px rgba(200,130,106,0.08),
+            0 1px 2px rgba(0,0,0,0.04),
+            inset 0 1px 0 rgba(255,255,255,0.88);
+          transform: scale(1);
+        `}
       ">${n}</span>
       <span style="
-        font-size: 8.5px;
+        font-size: 8px;
         font-weight: ${a?`700`:`500`};
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -62,20 +86,38 @@ import{n as e}from"./router-SnC_tAPp.js";var t=[{path:`/timeline`,icon:`✦`,lab
     transition: all 0.3s ease;
   `;let l=document.createElement(`button`);return l.style.cssText=`
     position: absolute;
-    top: -20px;
-    width: 54px;
-    height: 54px;
+    top: -22px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    border: 2.5px solid rgba(255,255,255,0.95);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0px;
-    transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
-    background: ${i?`linear-gradient(145deg, #d4956a, #c8826a, #b8705a)`:`linear-gradient(145deg, #f7ede7, #edddd5)`};
-    box-shadow: ${i?`0 8px 28px rgba(200,130,106,0.6), 0 2px 8px rgba(180,110,90,0.3), inset 0 1px 0 rgba(255,255,255,0.25)`:`0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9)`};
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+    ${i?`
+      background: linear-gradient(145deg, #e09070 0%, #c8826a 45%, #b46858 100%);
+      border: 2px solid rgba(255,255,255,0.92);
+      box-shadow:
+        0 10px 32px rgba(200,130,106,0.55),
+        0 4px 12px rgba(180,110,90,0.30),
+        0 1px 3px rgba(0,0,0,0.12),
+        inset 0 1.5px 0 rgba(255,255,255,0.32),
+        inset 0 -1px 0 rgba(0,0,0,0.08);
+    `:`
+      background: linear-gradient(145deg, rgba(255,255,255,0.88) 0%, rgba(255,240,232,0.70) 50%, rgba(255,228,216,0.55) 100%);
+      backdrop-filter: blur(24px) saturate(1.9) brightness(1.05);
+      -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.05);
+      border: 1.5px solid rgba(255,255,255,0.90);
+      box-shadow:
+        0 8px 28px rgba(200,130,106,0.18),
+        0 3px 10px rgba(200,130,106,0.10),
+        0 1px 3px rgba(0,0,0,0.06),
+        inset 0 1.5px 0 rgba(255,255,255,0.96),
+        inset 0 -1px 1px rgba(200,130,106,0.08);
+    `}
   `,l.innerHTML=`
     <span style="
       font-size: 20px;

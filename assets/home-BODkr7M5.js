@@ -1,4 +1,4 @@
-import{a as e,i as t,n,o as r}from"./router-SnC_tAPp.js";import{a as i,i as a,n as o,s,u as c}from"./index-DsrYTFIg.js";import{t as l}from"./nav-B2cJ5DU3.js";import{n as u}from"./storage-j0tHUYzK.js";function d(e){if(!e)return``;let t=new Date(e),n=e=>String(e).padStart(2,`0`);return`${t.getFullYear()}-${n(t.getMonth()+1)}-${n(t.getDate())}T${n(t.getHours())}:${n(t.getMinutes())}`}function f(){return d(new Date().toISOString())}function p(n){let{user:r}=t();if(!r)return;let i=document.createElement(`div`);i.className=`fixed inset-0 z-[200]`,i.style.cssText=`background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);`;let a=document.createElement(`div`);a.className=`fixed bottom-0 left-1/2 -translate-x-1/2 w-full z-[201]`,a.style.cssText=`
+import{a as e,i as t,n,o as r}from"./router-SnC_tAPp.js";import{a as i,i as a,n as o,s,u as c}from"./index-BrHllOKK.js";import{t as l}from"./nav-CjXhJ2mg.js";import{n as u}from"./storage-j0tHUYzK.js";function d(e){if(!e)return``;let t=new Date(e),n=e=>String(e).padStart(2,`0`);return`${t.getFullYear()}-${n(t.getMonth()+1)}-${n(t.getDate())}T${n(t.getHours())}:${n(t.getMinutes())}`}function f(){return d(new Date().toISOString())}function p(n){let{user:r}=t();if(!r)return;let i=document.createElement(`div`);i.className=`fixed inset-0 z-[200]`,i.style.cssText=`background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);`;let a=document.createElement(`div`);a.className=`fixed bottom-0 left-1/2 -translate-x-1/2 w-full z-[201]`,a.style.cssText=`
     max-width: 430px;
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(32px) saturate(1.6);
@@ -173,17 +173,47 @@ import{a as e,i as t,n,o as r}from"./router-SnC_tAPp.js";import{a as i,i as a,n 
       </div>
     </div>
   `,s.relationship_start){let t=e.querySelector(`#timer-grid`),n;function r(){let e=new Date(s.relationship_start).getTime(),n=Date.now()-e;if(n<0){t.innerHTML=h(`0`,`hari`)+h(`0`,`jam`)+h(`0`,`menit`)+h(`0`,`detik`);return}let r=Math.floor(n/864e5),i=Math.floor(n%864e5/36e5),a=Math.floor(n%36e5/6e4),o=Math.floor(n%6e4/1e3);t.innerHTML=h(r.toString(),`Hari`)+h(String(i).padStart(2,`0`),`Jam`)+h(String(a).padStart(2,`0`),`Menit`)+h(String(o).padStart(2,`0`),`Detik`)}r(),n=setInterval(r,1e3);let i=new MutationObserver(()=>{e.isConnected||(clearInterval(n),i.disconnect())});i.observe(document.body,{childList:!0,subtree:!1})}e.querySelector(`#see-all`)?.addEventListener(`click`,()=>n(`/timeline`));let E=()=>p(async()=>{let t=await m();e.replaceWith(t)});return e.querySelector(`#btn-edit-date`)?.addEventListener(`click`,E),e.querySelector(`#btn-set-date`)?.addEventListener(`click`,E),e.querySelectorAll(`[data-nav]`).forEach(e=>{e.addEventListener(`click`,()=>n(e.dataset.nav))}),e.appendChild(l()),e}function h(e,t){return`
-    <div class="flex flex-col items-center gap-1 rounded-2xl py-3"
-         style="background:rgba(200,130,106,0.10); border:1px solid rgba(200,130,106,0.18)">
-      <span class="font-display font-semibold text-ink leading-none" style="font-size:clamp(1.4rem,6vw,2rem)">${e}</span>
-      <span class="text-[9px] uppercase tracking-[0.12em] text-ink-muted font-medium">${t}</span>
+    <div style="
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      border-radius: 18px; padding: 14px 6px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.76) 0%, rgba(255,238,228,0.52) 50%, rgba(255,224,208,0.38) 100%);
+      backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+      -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+      border: 1px solid rgba(255,255,255,0.82);
+      box-shadow:
+        0 6px 22px rgba(200,130,106,0.13),
+        0 2px 6px rgba(200,130,106,0.08),
+        0 1px 2px rgba(0,0,0,0.04),
+        inset 0 1.5px 0 rgba(255,255,255,0.94),
+        inset 0 -1px 2px rgba(200,130,106,0.07);
+    ">
+      <span style="font-family:'Playfair Display',Georgia,serif; font-weight:600; color:#1a1916; line-height:1; font-size:clamp(1.4rem,6vw,2rem)">${e}</span>
+      <span style="font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:#6b6860; font-weight:500">${t}</span>
     </div>
   `}function g(e,t,n){return`
     <button data-nav="${n}"
-      class="glass p-5 text-left cursor-pointer select-none
+      class="glass p-4 text-left cursor-pointer select-none
              hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150">
-      <span class="block text-2xl mb-2.5 leading-none">${e}</span>
-      <span class="text-[13px] font-medium text-ink leading-snug">${t}</span>
+      <span style="
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 46px; height: 46px;
+        font-size: 20px; line-height: 1;
+        border-radius: 15px;
+        margin-bottom: 10px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(255,242,236,0.52) 50%, rgba(255,228,216,0.38) 100%);
+        backdrop-filter: blur(20px) saturate(1.9) brightness(1.04);
+        -webkit-backdrop-filter: blur(20px) saturate(1.9) brightness(1.04);
+        border: 1px solid rgba(255,255,255,0.82);
+        box-shadow:
+          0 5px 18px rgba(200,130,106,0.14),
+          0 2px 6px rgba(200,130,106,0.08),
+          0 1px 2px rgba(0,0,0,0.04),
+          inset 0 1.5px 0 rgba(255,255,255,0.94),
+          inset 0 -1px 1px rgba(200,130,106,0.07);
+      ">${e}</span>
+      <span class="text-[13px] font-medium text-ink leading-snug block">${t}</span>
     </button>
   `}function _(e){let t=document.createElement(`div`);return t.innerHTML=`
     <div class="min-h-dvh pb-[calc(64px+1.5rem)]">
@@ -224,7 +254,24 @@ import{a as e,i as t,n,o as r}from"./router-SnC_tAPp.js";import{a as i,i as a,n 
     </div>
   `,t.querySelector(`#btn-go-onboarding`).addEventListener(`click`,()=>{localStorage.removeItem(`skip_onboarding`),n(`/onboarding`)}),t.appendChild(l()),t}function v(e,t,n){return`
     <div class="glass px-4 py-3 flex items-center gap-3">
-      <span class="text-lg leading-none w-6 text-center flex-shrink-0">${e}</span>
+      <span style="
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 36px; height: 36px;
+        font-size: 15px; line-height: 1;
+        border-radius: 11px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.74) 0%, rgba(255,242,236,0.50) 100%);
+        backdrop-filter: blur(16px) saturate(1.8);
+        -webkit-backdrop-filter: blur(16px) saturate(1.8);
+        border: 1px solid rgba(255,255,255,0.80);
+        box-shadow:
+          0 3px 12px rgba(200,130,106,0.11),
+          0 1px 3px rgba(0,0,0,0.04),
+          inset 0 1px 0 rgba(255,255,255,0.92),
+          inset 0 -0.5px 1px rgba(200,130,106,0.06);
+      ">${e}</span>
       <div>
         <p class="text-sm font-medium text-ink">${t}</p>
         <p class="text-xs text-ink-muted">${n}</p>
