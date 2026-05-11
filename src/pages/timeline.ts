@@ -19,8 +19,8 @@ const LERP_ROT  = 0.09
 const SPEED     = 0.00090   // same speed for all → spacing stays fixed
 const HEADER_H  = 160
 const NAV_H     = 84
-// Gap between cards per lane. 0.20 = 5 slots per lane → clearly separated
-const T_STEP    = 0.20
+// Gap between cards per lane
+const T_STEP    = 0.14
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
