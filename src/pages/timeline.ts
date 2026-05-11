@@ -19,7 +19,7 @@ const LERP_ROT         = 0.07
 const SPEED            = 0.00048  // 5/10
 const HEADER_H         = 160
 const NAV_H            = 84
-const VISIBLE_PER_LANE = 8        // cards on screen per lane; rest cycle in
+
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
@@ -492,8 +492,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
     slot: number,
     laneId: 0 | 1,
   ): PhysCard => {
-    const visCount = Math.min(VISIBLE_PER_LANE, lQueue.length)
-    const t        = visCount > 1 ? slot / visCount : 0.5
+    const t = lQueue.length > 1 ? slot / lQueue.length : 0.5
     const pos      = pathBez(t, lanes[laneId])
     const d        = Math.abs(t - 0.5) * 2
     const initS    = lerp(MAX_SCALE, MIN_SCALE, d * d)
@@ -561,10 +560,8 @@ export async function renderTimeline(): Promise<HTMLElement> {
   }
 
   const cards: PhysCard[] = [
-    ...Array.from({ length: Math.min(VISIBLE_PER_LANE, laneQueues[0].length) },
-      (_, slot) => makeCard(laneQueues[0], slot, 0)),
-    ...Array.from({ length: Math.min(VISIBLE_PER_LANE, laneQueues[1].length) },
-      (_, slot) => makeCard(laneQueues[1], slot, 1)),
+    ...laneQueues[0].map((_, slot) => makeCard(laneQueues[0], slot, 0)),
+    ...laneQueues[1].map((_, slot) => makeCard(laneQueues[1], slot, 1)),
   ]
 
   // ── RAF loop ──────────────────────────────────────────────────
