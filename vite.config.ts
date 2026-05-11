@@ -6,6 +6,6 @@ export default defineConfig({
   base: '/appdate/',
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
   },
 })
