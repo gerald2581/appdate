@@ -427,12 +427,15 @@ export async function renderTimeline(): Promise<HTMLElement> {
   const H = window.innerHeight
   let lanes = buildLanes(W, H)
 
-  const half = Math.ceil(mems.length / 2)
+  const half       = Math.ceil(mems.length / 2)
+  const lane0Count = half
+  const lane1Count = mems.length - half
 
   const cards: PhysCard[] = mems.map((m, i) => {
-    const lane = (i < half ? 0 : 1) as 0 | 1
-    const slot = i < half ? i : i - half
-    const t    = (slot * T_STEP) % 1
+    const lane      = (i < half ? 0 : 1) as 0 | 1
+    const slot      = i < half ? i : i - half
+    const laneCount = lane === 0 ? lane0Count : lane1Count
+    const t         = laneCount > 1 ? slot / laneCount : 0.5
     const pos  = pathBez(t, lanes[lane])
     const d    = Math.abs(t - 0.5) * 2
     const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
