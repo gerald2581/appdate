@@ -1,17 +1,17 @@
-import{i as e,n as t,o as n}from"./router-SnC_tAPp.js";import{n as r,s as i}from"./index-44qDEd9M.js";import{t as a}from"./nav-B2cJ5DU3.js";import{t as o}from"./escape-1QVFIIou.js";import{n as s}from"./storage-j0tHUYzK.js";import{t as c}from"./confirm-modal-CDDWdlXn.js";var l=82,u=82,d=1.2,f=.72,p=.024,m=.048,h=.08,g=42e-5,_=160,v=84,y=7,b=[`200,130,106`,`122,158,200`,`106,184,122`,`212,149,106`,`160,130,200`,`180,160,106`];function x(e,{p0:t,p1:n,p2:r}){let i=1-e;return{x:i*i*t.x+2*i*e*n.x+e*e*r.x,y:i*i*t.y+2*i*e*n.y+e*e*r.y}}function S(e,t){let n=(_+t-v)/2,r=u*.55,i=_+24,a=t-v-24;return[{p0:{x:-l,y:n-r},p1:{x:e*.5,y:i},p2:{x:e+l,y:n-r}},{p0:{x:-l,y:n+r},p1:{x:e*.5,y:a},p2:{x:e+l,y:n+r}}]}function C(e,t,n){return e+(t-e)*n}function w(e,t){if(e.inner.innerHTML=``,t.photoUrl){let n=document.createElement(`img`);n.src=t.photoUrl,n.draggable=!1,n.style.cssText=`
+import{i as e,n as t,o as n}from"./router-SnC_tAPp.js";import{n as r,s as i}from"./index-DsrYTFIg.js";import{t as a}from"./nav-B2cJ5DU3.js";import{t as o}from"./escape-1QVFIIou.js";import{n as s}from"./storage-j0tHUYzK.js";import{t as c}from"./confirm-modal-CDDWdlXn.js";var l=82,u=82,d=1.2,f=.72,p=.024,m=.048,h=.08,g=42e-5,_=160,v=84,y=7,b=[`200,130,106`,`122,158,200`,`106,184,122`,`212,149,106`,`160,130,200`,`180,160,106`];function x(e,{p0:t,p1:n,p2:r}){let i=1-e;return{x:i*i*t.x+2*i*e*n.x+e*e*r.x,y:i*i*t.y+2*i*e*n.y+e*e*r.y}}function S(e,t){let n=(_+t-v)/2,r=u*.55,i=_+24,a=t-v-24;return[{p0:{x:-l,y:n-r},p1:{x:e*.5,y:i},p2:{x:e+l,y:n-r}},{p0:{x:-l,y:n+r},p1:{x:e*.5,y:a},p2:{x:e+l,y:n+r}}]}function C(e,t,n){return e+(t-e)*n}function w(e,t){if(e.inner.innerHTML=``,t.photoUrl){let n=document.createElement(`img`);n.src=t.photoUrl,n.draggable=!1,n.style.cssText=`
       width:100%;height:100%;object-fit:cover;
       border-radius:13px;display:block;pointer-events:none;user-select:none;
     `,e.inner.appendChild(n)}else{let n=document.createElement(`div`);n.style.cssText=`
       width:100%;height:100%;border-radius:13px;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:8px;text-align:center;
-      background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,rgba(200,130,106,0.12),rgba(200,130,106,0.04));
     `,n.innerHTML=`
-      <span style="font-size:16px;opacity:.7;margin-bottom:4px">✦</span>
-      <span style="font-size:8px;font-weight:700;color:#c8826a;
-                   text-transform:uppercase;letter-spacing:.09em;line-height:1.3">
-        ${o(t.title.length>16?t.title.slice(0,16)+`…`:t.title)}
-      </span>`,e.inner.appendChild(n)}}async function T(){let _=document.createElement(`div`),{couple_id:v}=e();if(!v)return _;let{data:T,error:E}=await n.from(`memories`).select(`*`).eq(`couple_id`,v).order(`memory_date`,{ascending:!1}),D=T??[],O=await Promise.all(D.map(async e=>({...e,photoUrl:e.photo_path?await s(e.photo_path).catch(()=>null):null})));_.style.cssText=`
+      <span style="
+        font-family:'Playfair Display',Georgia,serif;
+        font-size:28px;font-style:italic;font-weight:400;
+        color:#c8826a;opacity:0.75;letter-spacing:-.01em;
+        line-height:1;
+      ">${o(t.title)}</span>`,e.inner.appendChild(n)}}async function T(){let _=document.createElement(`div`),{couple_id:v}=e();if(!v)return _;let{data:T,error:E}=await n.from(`memories`).select(`*`).eq(`couple_id`,v).order(`memory_date`,{ascending:!1}),D=T??[],O=await Promise.all(D.map(async e=>({...e,photoUrl:e.photo_path?await s(e.photo_path).catch(()=>null):null})));_.style.cssText=`
     position: relative;
     height: 100dvh;
     overflow: hidden;
