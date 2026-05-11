@@ -1,4 +1,4 @@
-import{n as e}from"./router-BKqFk8oo.js";function t(e,t=22){return`<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none"
+import{n as e}from"./router-SnC_tAPp.js";function t(e,t=22){return`<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
     style="display:block;flex-shrink:0">${e}</svg>`}var n={memories:t(`
     <path d="M12 2C12 7.25 16.75 12 22 12C16.75 12 12 16.75 12 22C12 16.75 7.25 12 2 12C7.25 12 12 7.25 12 2Z"/>
