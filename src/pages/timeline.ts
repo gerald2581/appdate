@@ -11,6 +11,101 @@ import type { Memory } from '../types'
 
 type MemWithUrl = Memory & { photoUrl: string | null }
 
+// ── Constants ─────────────────────────────────────────────────
+const CARD_W           = 82
+const CARD_H           = 82
+const MAX_SCALE        = 1.20
+const MIN_SCALE        = 0.72
+const LERP_S           = 0.024
+const LERP_P           = 0.048
+const LERP_R           = 0.08
+const SPEED            = 0.00042
+const HEADER_H         = 160
+const NAV_H            = 84
+const VISIBLE_PER_LANE = 5
+
+const GLOW: readonly string[] = [
+  '200,130,106', '122,158,200', '106,184,122',
+  '212,149,106', '160,130,200', '180,160,106',
+]
+
+// ── Bezier lane geometry ──────────────────────────────────────
+interface Pt   { x: number; y: number }
+interface Lane { p0: Pt; p1: Pt; p2: Pt }
+
+function bezAt(t: number, { p0, p1, p2 }: Lane): Pt {
+  const u = 1 - t
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  }
+}
+
+function buildLanes(W: number, H: number): [Lane, Lane] {
+  const mid  = (HEADER_H + H - NAV_H) / 2
+  const gap  = CARD_H * 0.55
+  const topY = HEADER_H + 24
+  const botY = H - NAV_H - 24
+  return [
+    // Lane 0: left→right, arcs UP at center
+    { p0: { x: -CARD_W,    y: mid - gap },
+      p1: { x: W * 0.5,    y: topY      },
+      p2: { x: W + CARD_W, y: mid - gap } },
+    // Lane 1: left→right, arcs DOWN at center
+    { p0: { x: -CARD_W,    y: mid + gap },
+      p1: { x: W * 0.5,    y: botY      },
+      p2: { x: W + CARD_W, y: mid + gap } },
+  ]
+}
+
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
+
+// ── Per-card state ────────────────────────────────────────────
+interface Card {
+  el: HTMLDivElement
+  inner: HTMLDivElement
+  lane: 0 | 1
+  t: number
+  curS: number; curO: number
+  curX: number; curY: number
+  rX: number; rY: number
+  tRX: number; tRY: number
+  hit: boolean
+  rgb: string
+  queue: MemWithUrl[]
+  qIdx: number
+  readonly mem: MemWithUrl
+}
+
+function applyMem(card: Card, m: MemWithUrl) {
+  card.inner.innerHTML = ''
+  if (m.photoUrl) {
+    const img = document.createElement('img')
+    img.src = m.photoUrl
+    img.draggable = false
+    img.style.cssText = `
+      width:100%;height:100%;object-fit:cover;
+      border-radius:13px;display:block;pointer-events:none;user-select:none;
+    `
+    card.inner.appendChild(img)
+  } else {
+    const box = document.createElement('div')
+    box.style.cssText = `
+      width:100%;height:100%;border-radius:13px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:8px;text-align:center;
+      background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
+    `
+    box.innerHTML = `
+      <span style="font-size:16px;opacity:.7;margin-bottom:4px">✦</span>
+      <span style="font-size:8px;font-weight:700;color:#c8826a;
+                   text-transform:uppercase;letter-spacing:.09em;line-height:1.3">
+        ${esc(m.title.length > 16 ? m.title.slice(0, 16) + '…' : m.title)}
+      </span>`
+    card.inner.appendChild(box)
+  }
+}
+
 export async function renderTimeline(): Promise<HTMLElement> {
   const wrapper = document.createElement('div')
   const { couple_id } = getState()
@@ -121,7 +216,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
     wrapper.appendChild(err)
   }
 
-  // ── Canvas (kosong — siap setup move) ────────────────────────
+  // ── Canvas ────────────────────────────────────────────────────
   const canvas = document.createElement('div')
   canvas.style.cssText = 'position:absolute;inset:0;overflow:visible;'
   wrapper.appendChild(canvas)
@@ -329,46 +424,161 @@ export async function renderTimeline(): Promise<HTMLElement> {
     }
   })
 
-  // ── Cards (statis, siap ditambahkan move) ─────────────────────
-  mems.forEach(m => {
+  // ── Build circuit cards ───────────────────────────────────────
+  const W = Math.min(window.innerWidth, 430)
+  const H = window.innerHeight
+  let lanes = buildLanes(W, H)
+
+  // Interleave mems across two lane queues
+  const queues: [MemWithUrl[], MemWithUrl[]] = [[], []]
+  mems.forEach((m, i) => queues[(i % 2) as 0 | 1].push(m))
+
+  const allCards: Card[] = []
+
+  const makeCard = (queue: MemWithUrl[], slot: number, laneId: 0 | 1): Card => {
+    const count = Math.min(VISIBLE_PER_LANE, queue.length)
+    const t     = count > 1 ? slot / count : 0.25
+    const pos   = bezAt(t, lanes[laneId])
+    const d     = Math.abs(t - 0.5) * 2
+    const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
+    const initO = lerp(1.0, 0.55, d)
+
     const el = document.createElement('div')
     el.style.cssText = `
-      position:absolute;top:50%;left:50%;
-      width:96px;height:96px;
+      position:absolute;top:0;left:0;
+      width:${CARD_W}px;height:${CARD_H}px;
       border-radius:16px;cursor:pointer;
-      transform:translate(-50%,-50%);
-      background:rgba(255,255,255,0.62);
-      border:.5px solid rgba(255,255,255,0.72);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
-      padding:3px;overflow:hidden;
+      will-change:transform;transform-origin:center;
     `
-    if (m.photoUrl) {
-      const img = document.createElement('img')
-      img.src = m.photoUrl
-      img.draggable = false
-      img.style.cssText = `width:100%;height:100%;object-fit:cover;border-radius:13px;display:block;`
-      el.appendChild(img)
-    } else {
-      const txt = document.createElement('div')
-      txt.style.cssText = `
-        width:100%;height:100%;border-radius:13px;
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        padding:10px;text-align:center;
-        background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
-      `
-      txt.innerHTML = `<span style="font-size:18px;opacity:.7;margin-bottom:5px">✦</span>
-        <span style="font-size:8.5px;font-weight:700;color:#c8826a;text-transform:uppercase;letter-spacing:.09em;line-height:1.35">
-          ${esc(m.title.length > 18 ? m.title.slice(0, 18) + '…' : m.title)}
-        </span>`
-      el.appendChild(txt)
-    }
-    el.addEventListener('click', () => openDetail(m, el))
-    canvas.appendChild(el)
-  })
 
-  // Cleanup overlay on unmount
+    const inner = document.createElement('div')
+    inner.style.cssText = `
+      width:100%;height:100%;border-radius:16px;overflow:hidden;
+      background:rgba(255,255,255,0.65);
+      border:.5px solid rgba(255,255,255,0.75);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
+      padding:3px;
+    `
+    el.appendChild(inner)
+    canvas.appendChild(el)
+
+    const ox0 = pos.x - CARD_W / 2 - CARD_W * (initS - 1) / 2
+    const oy0 = pos.y - CARD_H / 2 - CARD_H * (initS - 1) / 2
+    el.style.transform = `translate(${ox0}px,${oy0}px) scale(${initS})`
+    el.style.opacity   = String(initO)
+
+    const card: Card = {
+      el, inner,
+      lane: laneId, t,
+      curS: initS, curO: initO,
+      curX: pos.x, curY: pos.y,
+      rX: 0, rY: 0, tRX: 0, tRY: 0,
+      hit: false,
+      rgb: GLOW[slot % GLOW.length],
+      queue, qIdx: slot,
+      get mem() { return this.queue[this.qIdx] },
+    }
+
+    applyMem(card, queue[slot])
+
+    const onMove = (cx: number, cy: number) => {
+      card.hit = true
+      const r  = el.getBoundingClientRect()
+      const dx = (cx - (r.left + r.width  / 2)) / (r.width  / 2)
+      const dy = (cy - (r.top  + r.height / 2)) / (r.height / 2)
+      card.tRX = -dy * 22
+      card.tRY =  dx * 22
+    }
+    const onEnd = () => { card.hit = false; card.tRX = 0; card.tRY = 0 }
+
+    el.addEventListener('mousemove',  e => onMove(e.clientX, e.clientY))
+    el.addEventListener('mouseleave', onEnd)
+    el.addEventListener('touchmove',  e => {
+      e.preventDefault()
+      onMove(e.touches[0].clientX, e.touches[0].clientY)
+    }, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    el.addEventListener('click', () => openDetail(card.mem, el))
+
+    return card
+  }
+
+  for (let lane = 0 as 0 | 1; lane < 2; lane++) {
+    const q     = queues[lane]
+    const count = Math.min(VISIBLE_PER_LANE, q.length)
+    for (let slot = 0; slot < count; slot++) {
+      allCards.push(makeCard(q, slot, lane))
+    }
+  }
+
+  // ── Animation loop ────────────────────────────────────────────
+  let rafId = 0
+
+  const tick = () => {
+    const CW = Math.min(window.innerWidth, 430)
+    const CH = window.innerHeight
+    lanes = buildLanes(CW, CH)
+
+    for (const c of allCards) {
+      // t always advances — preserves even spacing even during hover
+      const nextT = c.t + SPEED
+      if (nextT >= 1 && c.queue.length > 1) {
+        // card exits screen right → silently swap to next photo
+        c.qIdx = (c.qIdx + 1) % c.queue.length
+        applyMem(c, c.queue[c.qIdx])
+      }
+      c.t = nextT % 1
+
+      const target = bezAt(c.t, lanes[c.lane])
+      const d = Math.abs(c.t - 0.5) * 2
+
+      if (c.hit) {
+        // Hover: scale up, freeze visual position, apply tilt
+        c.curS = lerp(c.curS, MAX_SCALE + 0.15, LERP_S)
+        c.curO = 1.0
+        c.rX   = lerp(c.rX, c.tRX, LERP_R)
+        c.rY   = lerp(c.rY, c.tRY, LERP_R)
+        // curX / curY NOT updated — card stays put while hovered
+      } else {
+        // Release: lerp back to circuit position
+        c.curS = lerp(c.curS, lerp(MAX_SCALE, MIN_SCALE, d * d), LERP_S)
+        c.curO = lerp(c.curO, lerp(1.0, 0.55, d), LERP_S)
+        c.rX   = lerp(c.rX, 0, LERP_R)
+        c.rY   = lerp(c.rY, 0, LERP_R)
+        c.curX = lerp(c.curX, target.x, LERP_P)
+        c.curY = lerp(c.curY, target.y, LERP_P)
+      }
+
+      c.el.style.zIndex = c.hit ? '9999' : String(Math.round(c.curS * 300))
+
+      const ox = c.curX - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
+      const oy = c.curY - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
+
+      c.el.style.transform =
+        `translate(${ox}px,${oy}px) ` +
+        `perspective(900px) ` +
+        `rotateX(${c.rX}deg) rotateY(${c.rY}deg) ` +
+        `scale(${c.curS})`
+
+      c.el.style.opacity = String(c.curO)
+
+      c.inner.style.boxShadow = c.hit
+        ? `0 8px 24px rgba(${c.rgb},.38), 0 0 14px rgba(${c.rgb},.18), inset 0 1px 0 rgba(255,255,255,.95)`
+        : `inset 0 1px 0 rgba(255,255,255,.9)`
+    }
+
+    rafId = requestAnimationFrame(tick)
+  }
+
+  rafId = requestAnimationFrame(tick)
+
+  // Cleanup on unmount
   const obs = new MutationObserver(() => {
-    if (!wrapper.isConnected) { overlay.remove(); obs.disconnect() }
+    if (!wrapper.isConnected) {
+      cancelAnimationFrame(rafId)
+      overlay.remove()
+      obs.disconnect()
+    }
   })
   obs.observe(document.body, { childList: true, subtree: false })
 
