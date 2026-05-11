@@ -93,14 +93,23 @@ function applyMem(card: Card, m: MemWithUrl) {
     box.style.cssText = `
       width:100%;height:100%;border-radius:13px;
       display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(135deg,rgba(200,130,106,0.12),rgba(200,130,106,0.04));
+      background: linear-gradient(155deg, rgba(255,255,255,0.70) 0%, rgba(255,238,228,0.48) 50%, rgba(255,220,204,0.32) 100%);
+      backdrop-filter: blur(22px) saturate(1.9) brightness(1.04);
+      -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.04);
+      border: 1px solid rgba(255,255,255,0.80);
+      box-shadow:
+        0 6px 24px rgba(200,130,106,0.14),
+        0 2px 7px rgba(200,130,106,0.08),
+        inset 0 1.5px 0 rgba(255,255,255,0.94),
+        inset 0 -1px 2px rgba(200,130,106,0.07);
     `
     box.innerHTML = `
       <span style="
         font-family:'Playfair Display',Georgia,serif;
-        font-size:28px;font-style:italic;font-weight:400;
-        color:#c8826a;opacity:0.75;letter-spacing:-.01em;
+        font-size:26px;font-style:italic;font-weight:400;
+        color:#c8826a;opacity:0.80;letter-spacing:-.01em;
         line-height:1;
+        text-shadow: 0 1px 8px rgba(200,130,106,0.18);
       ">${esc(m.title)}</span>`
     card.inner.appendChild(box)
   }

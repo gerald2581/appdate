@@ -226,10 +226,22 @@ export async function renderHome(): Promise<HTMLElement> {
 
 function timerUnit(value: string, label: string): string {
   return `
-    <div class="flex flex-col items-center gap-1 rounded-2xl py-3"
-         style="background:rgba(200,130,106,0.10); border:1px solid rgba(200,130,106,0.18)">
-      <span class="font-display font-semibold text-ink leading-none" style="font-size:clamp(1.4rem,6vw,2rem)">${value}</span>
-      <span class="text-[9px] uppercase tracking-[0.12em] text-ink-muted font-medium">${label}</span>
+    <div style="
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      border-radius: 18px; padding: 14px 6px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.76) 0%, rgba(255,238,228,0.52) 50%, rgba(255,224,208,0.38) 100%);
+      backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+      -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+      border: 1px solid rgba(255,255,255,0.82);
+      box-shadow:
+        0 6px 22px rgba(200,130,106,0.13),
+        0 2px 6px rgba(200,130,106,0.08),
+        0 1px 2px rgba(0,0,0,0.04),
+        inset 0 1.5px 0 rgba(255,255,255,0.94),
+        inset 0 -1px 2px rgba(200,130,106,0.07);
+    ">
+      <span style="font-family:'Playfair Display',Georgia,serif; font-weight:600; color:#1a1916; line-height:1; font-size:clamp(1.4rem,6vw,2rem)">${value}</span>
+      <span style="font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:#6b6860; font-weight:500">${label}</span>
     </div>
   `
 }
@@ -237,10 +249,28 @@ function timerUnit(value: string, label: string): string {
 function quickCard(icon: string, label: string, path: string): string {
   return `
     <button data-nav="${path}"
-      class="glass p-5 text-left cursor-pointer select-none
+      class="glass p-4 text-left cursor-pointer select-none
              hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150">
-      <span class="block text-2xl mb-2.5 leading-none">${icon}</span>
-      <span class="text-[13px] font-medium text-ink leading-snug">${label}</span>
+      <span style="
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 46px; height: 46px;
+        font-size: 20px; line-height: 1;
+        border-radius: 15px;
+        margin-bottom: 10px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(255,242,236,0.52) 50%, rgba(255,228,216,0.38) 100%);
+        backdrop-filter: blur(20px) saturate(1.9) brightness(1.04);
+        -webkit-backdrop-filter: blur(20px) saturate(1.9) brightness(1.04);
+        border: 1px solid rgba(255,255,255,0.82);
+        box-shadow:
+          0 5px 18px rgba(200,130,106,0.14),
+          0 2px 6px rgba(200,130,106,0.08),
+          0 1px 2px rgba(0,0,0,0.04),
+          inset 0 1.5px 0 rgba(255,255,255,0.94),
+          inset 0 -1px 1px rgba(200,130,106,0.07);
+      ">${icon}</span>
+      <span class="text-[13px] font-medium text-ink leading-snug block">${label}</span>
     </button>
   `
 }
@@ -298,7 +328,24 @@ function renderSoloHome(name: string): HTMLElement {
 function featureRow(icon: string, title: string, desc: string): string {
   return `
     <div class="glass px-4 py-3 flex items-center gap-3">
-      <span class="text-lg leading-none w-6 text-center flex-shrink-0">${icon}</span>
+      <span style="
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 36px; height: 36px;
+        font-size: 15px; line-height: 1;
+        border-radius: 11px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.74) 0%, rgba(255,242,236,0.50) 100%);
+        backdrop-filter: blur(16px) saturate(1.8);
+        -webkit-backdrop-filter: blur(16px) saturate(1.8);
+        border: 1px solid rgba(255,255,255,0.80);
+        box-shadow:
+          0 3px 12px rgba(200,130,106,0.11),
+          0 1px 3px rgba(0,0,0,0.04),
+          inset 0 1px 0 rgba(255,255,255,0.92),
+          inset 0 -0.5px 1px rgba(200,130,106,0.06);
+      ">${icon}</span>
       <div>
         <p class="text-sm font-medium text-ink">${title}</p>
         <p class="text-xs text-ink-muted">${desc}</p>
