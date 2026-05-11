@@ -534,8 +534,6 @@ export async function renderTimeline(): Promise<HTMLElement> {
     const CH = window.innerHeight
     lanes = buildLanes(CW, CH)
 
-    const anyHit = cards.some(c => c.hit)
-
     for (const c of cards) {
       if (!c.hit) {
         c.t = (c.t + SPEED) % 1
@@ -546,7 +544,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
       // Scale & opacity: max at t=0.5 (path center = screen center), min at edges
       const d  = Math.abs(c.t - 0.5) * 2
       const tS = c.hit ? MAX_SCALE + 0.18 : lerp(MAX_SCALE, MIN_SCALE, d * d)
-      const tO = c.hit ? 1.0 : (anyHit ? 0.0 : lerp(1.0, 0.38, d))
+      const tO = c.hit ? 1.0 : lerp(1.0, 0.38, d)
 
       c.curS = lerp(c.curS, tS, LERP_SCL)
       c.curO = lerp(c.curO, tO, LERP_SCL)
