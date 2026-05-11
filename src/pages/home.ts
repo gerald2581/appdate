@@ -1,4 +1,33 @@
 import { supabase } from '../lib/supabase'
+
+// ── SVG icon helpers ──────────────────────────────────────────
+function icon(paths: string, size = 26): string {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+    style="display:block;flex-shrink:0">${paths}</svg>`
+}
+
+const svgSparkle = icon(`
+  <path d="M12 2C12 7.25 16.75 12 22 12C16.75 12 12 16.75 12 22C12 16.75 7.25 12 2 12C7.25 12 12 7.25 12 2Z"/>
+`)
+const svgCamera = icon(`
+  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+  <circle cx="12" cy="13" r="4"/>
+`)
+const svgPlanner = icon(`
+  <rect x="3" y="4" width="18" height="18" rx="3"/>
+  <line x1="16" y1="2" x2="16" y2="6"/>
+  <line x1="8" y1="2" x2="8" y2="6"/>
+  <line x1="3" y1="10" x2="21" y2="10"/>
+  <path d="M9 16l2 2 4-4"/>
+`)
+const svgChat = icon(`
+  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+`)
+const svgPin = icon(`
+  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+  <circle cx="12" cy="10" r="3"/>
+`)
 import { getState } from '../store/state'
 import { renderNav } from '../components/nav'
 import { navigate } from '../router'
@@ -107,10 +136,10 @@ export async function renderHome(): Promise<HTMLElement> {
       <!-- Quick actions -->
       <div class="px-4 mb-4">
         <div class="grid grid-cols-2 gap-3">
-          ${quickCard('✦', 'Tambah Kenangan',   '/timeline/add')}
-          ${quickCard('◎', 'Rencanakan Kencan',  '/planner/add')}
-          ${quickCard('✉', 'Kirim Pesan',        '/chat')}
-          ${quickCard('◉', 'Cek Lokasi',         '/location')}
+          ${quickCard(svgCamera, 'Tambah Kenangan',   '/timeline/add')}
+          ${quickCard(svgPlanner,'Rencanakan Kencan',  '/planner/add')}
+          ${quickCard(svgChat,   'Kirim Pesan',        '/chat')}
+          ${quickCard(svgPin,    'Cek Lokasi',         '/location')}
         </div>
       </div>
 
@@ -160,7 +189,7 @@ export async function renderHome(): Promise<HTMLElement> {
               <div class="glass px-4 py-3 flex items-center gap-3">
                 ${m.photoUrl
                   ? `<img src="${m.photoUrl}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm" loading="lazy" />`
-                  : `<div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 select-none" style="background:rgba(200,130,106,0.12)">✦</div>`
+                  : `<div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 select-none" style="color:#c8826a;background:linear-gradient(145deg,rgba(255,255,255,0.72),rgba(255,238,228,0.50));border:1px solid rgba(255,255,255,0.82);box-shadow:0 3px 10px rgba(200,130,106,0.10),inset 0 1px 0 rgba(255,255,255,0.90)">${icon(`<path d="M12 2C12 7.25 16.75 12 22 12C16.75 12 12 16.75 12 22C12 16.75 7.25 12 2 12C7.25 12 12 7.25 12 2Z"/>`, 18)}</div>`
                 }
                 <div class="min-w-0">
                   <p class="text-sm font-medium text-ink truncate">${m.title}</p>
@@ -246,7 +275,7 @@ function timerUnit(value: string, label: string): string {
   `
 }
 
-function quickCard(icon: string, label: string, path: string): string {
+function quickCard(svgEl: string, label: string, path: string): string {
   return `
     <button data-nav="${path}"
       class="glass p-4 text-left cursor-pointer select-none
@@ -255,21 +284,21 @@ function quickCard(icon: string, label: string, path: string): string {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 46px; height: 46px;
-        font-size: 20px; line-height: 1;
-        border-radius: 15px;
-        margin-bottom: 10px;
-        background: linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(255,242,236,0.52) 50%, rgba(255,228,216,0.38) 100%);
-        backdrop-filter: blur(20px) saturate(1.9) brightness(1.04);
-        -webkit-backdrop-filter: blur(20px) saturate(1.9) brightness(1.04);
-        border: 1px solid rgba(255,255,255,0.82);
+        width: 54px; height: 54px;
+        border-radius: 17px;
+        margin-bottom: 12px;
+        color: #c8826a;
+        background: linear-gradient(145deg, rgba(255,255,255,0.74) 0%, rgba(255,242,234,0.50) 50%, rgba(255,228,212,0.34) 100%);
+        backdrop-filter: blur(22px) saturate(1.9) brightness(1.04);
+        -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.04);
+        border: 1px solid rgba(255,255,255,0.84);
         box-shadow:
-          0 5px 18px rgba(200,130,106,0.14),
-          0 2px 6px rgba(200,130,106,0.08),
+          0 6px 22px rgba(200,130,106,0.13),
+          0 2px 7px rgba(200,130,106,0.07),
           0 1px 2px rgba(0,0,0,0.04),
           inset 0 1.5px 0 rgba(255,255,255,0.94),
-          inset 0 -1px 1px rgba(200,130,106,0.07);
-      ">${icon}</span>
+          inset 0 -1px 2px rgba(200,130,106,0.06);
+      ">${svgEl}</span>
       <span class="text-[13px] font-medium text-ink leading-snug block">${label}</span>
     </button>
   `
@@ -290,7 +319,7 @@ function renderSoloHome(name: string): HTMLElement {
       <div class="mx-4 mb-4">
         <div class="glass p-5">
           <div class="flex items-start gap-3">
-            <span class="text-2xl leading-none mt-0.5">♡</span>
+            <span style="color:#c8826a;display:flex;align-items:center;margin-top:2px">${icon(`<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="rgba(200,130,106,0.10)"/>`, 26)}</span>
             <div class="flex-1">
               <p class="text-sm font-medium text-ink mb-1">Hubungkan dengan partner</p>
               <p class="text-xs text-ink-muted mb-3">Bagikan kode invite ke partner kamu untuk mulai semua fitur bersama.</p>
@@ -307,10 +336,10 @@ function renderSoloHome(name: string): HTMLElement {
       <div class="px-4">
         <p class="text-[10px] uppercase tracking-[0.15em] text-ink-muted font-medium mb-3">Fitur yang tersedia</p>
         <div class="flex flex-col gap-2">
-          ${featureRow('✦', 'Timeline Kenangan', 'Catat momen bersama dengan foto')}
-          ${featureRow('◎', 'Rencana Kencan', 'Plan date, lokasi, dan budget')}
-          ${featureRow('✉', 'Chat Privat', 'Pesan real-time hanya kalian berdua')}
-          ${featureRow('◉', 'Live Lokasi', 'Pantau lokasi partner secara real-time')}
+          ${featureRow(svgSparkle,  'Timeline Kenangan', 'Catat momen bersama dengan foto')}
+          ${featureRow(svgPlanner, 'Rencana Kencan',    'Plan date, lokasi, dan budget')}
+          ${featureRow(svgChat,    'Chat Privat',        'Pesan real-time hanya kalian berdua')}
+          ${featureRow(svgPin,     'Live Lokasi',        'Pantau lokasi partner secara real-time')}
         </div>
       </div>
     </div>
@@ -325,7 +354,7 @@ function renderSoloHome(name: string): HTMLElement {
   return wrapper
 }
 
-function featureRow(icon: string, title: string, desc: string): string {
+function featureRow(svgEl: string, title: string, desc: string): string {
   return `
     <div class="glass px-4 py-3 flex items-center gap-3">
       <span style="
@@ -333,19 +362,19 @@ function featureRow(icon: string, title: string, desc: string): string {
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        width: 36px; height: 36px;
-        font-size: 15px; line-height: 1;
-        border-radius: 11px;
-        background: linear-gradient(145deg, rgba(255,255,255,0.74) 0%, rgba(255,242,236,0.50) 100%);
-        backdrop-filter: blur(16px) saturate(1.8);
-        -webkit-backdrop-filter: blur(16px) saturate(1.8);
-        border: 1px solid rgba(255,255,255,0.80);
+        width: 44px; height: 44px;
+        border-radius: 14px;
+        color: #c8826a;
+        background: linear-gradient(145deg, rgba(255,255,255,0.72) 0%, rgba(255,242,234,0.48) 100%);
+        backdrop-filter: blur(18px) saturate(1.8);
+        -webkit-backdrop-filter: blur(18px) saturate(1.8);
+        border: 1px solid rgba(255,255,255,0.82);
         box-shadow:
-          0 3px 12px rgba(200,130,106,0.11),
+          0 4px 14px rgba(200,130,106,0.11),
           0 1px 3px rgba(0,0,0,0.04),
-          inset 0 1px 0 rgba(255,255,255,0.92),
+          inset 0 1.5px 0 rgba(255,255,255,0.92),
           inset 0 -0.5px 1px rgba(200,130,106,0.06);
-      ">${icon}</span>
+      ">${svgEl}</span>
       <div>
         <p class="text-sm font-medium text-ink">${title}</p>
         <p class="text-xs text-ink-muted">${desc}</p>
