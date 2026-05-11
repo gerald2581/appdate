@@ -92,16 +92,16 @@ function applyMem(card: Card, m: MemWithUrl) {
     const box = document.createElement('div')
     box.style.cssText = `
       width:100%;height:100%;border-radius:13px;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:8px;text-align:center;
-      background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,rgba(200,130,106,0.12),rgba(200,130,106,0.04));
     `
     box.innerHTML = `
-      <span style="font-size:16px;opacity:.7;margin-bottom:4px">✦</span>
-      <span style="font-size:8px;font-weight:700;color:#c8826a;
-                   text-transform:uppercase;letter-spacing:.09em;line-height:1.3">
-        ${esc(m.title.length > 16 ? m.title.slice(0, 16) + '…' : m.title)}
-      </span>`
+      <span style="
+        font-family:'Playfair Display',Georgia,serif;
+        font-size:28px;font-style:italic;font-weight:400;
+        color:#c8826a;opacity:0.75;letter-spacing:-.01em;
+        line-height:1;
+      ">${esc(m.title)}</span>`
     card.inner.appendChild(box)
   }
 }

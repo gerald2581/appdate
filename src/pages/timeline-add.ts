@@ -191,7 +191,7 @@ export function renderTimelineAdd(): HTMLElement {
         // Simpan semua foto sebagai entries terpisah, foto pertama pakai title+description
         const inserts = photoPaths.map((photoPath, i) => ({
           couple_id,
-          title:       i === 0 ? title : `${title} (${i + 1})`,
+          title:       i === 0 ? title : `${title} ${i + 1}`,
           type,
           memory_date: date,
           description: pickCaption(),
