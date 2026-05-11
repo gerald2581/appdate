@@ -577,12 +577,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
     for (const c of cards) {
       // t always advances — preserves spacing even during hover
-      const nextT = c.t + SPEED
-      if (nextT >= 1 && c.laneQueue.length > 1) {
-        c.queueIdx = (c.queueIdx + 1) % c.laneQueue.length
-        applyCardMem(c, c.laneQueue[c.queueIdx])
-      }
-      c.t = nextT % 1
+      c.t = (c.t + SPEED) % 1
 
       const circuitPos = pathBez(c.t, lanes[c.lane])
       const d  = Math.abs(c.t - 0.5) * 2
