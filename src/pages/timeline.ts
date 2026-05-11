@@ -429,19 +429,17 @@ export async function renderTimeline(): Promise<HTMLElement> {
   const H = window.innerHeight
   let lanes = buildLanes(W, H)
 
-  // Interleave mems across two lane queues
+  // Photos split across two lanes in upload order (interleaved)
   const laneQueues: [MemWithUrl[], MemWithUrl[]] = [[], []]
   mems.forEach((m, i) => laneQueues[(i % 2) as 0 | 1].push(m))
 
   const allCards: Card[] = []
 
-  // Each card gets its own sub-queue (every count-th photo starting at slot)
-  // so all photos are shown without overlap between cards
-  const makeSubQueue = (full: MemWithUrl[], slot: number, count: number): MemWithUrl[] =>
-    full.filter((_, i) => i % count === slot)
+  // Per-lane counter: next sequential photo to assign when a card wraps off-screen
+  // Starts at `count` because slots 0..count-1 are assigned at creation time
+  const laneNextIdx: [number, number] = [0, 0]
 
-  // subQueue: this card's unique photo set; slot: position index; totalCount: cards in this lane
-  const makeCard = (subQueue: MemWithUrl[], slot: number, totalCount: number, laneId: 0 | 1): Card => {
+  const makeCard = (queue: MemWithUrl[], slot: number, totalCount: number, laneId: 0 | 1): Card => {
     const t     = totalCount > 1 ? slot / totalCount : 0.25
     const pos   = bezAt(t, lanes[laneId])
     const d     = Math.abs(t - 0.5) * 2
@@ -480,11 +478,11 @@ export async function renderTimeline(): Promise<HTMLElement> {
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
       rgb: GLOW[slot % GLOW.length],
-      queue: subQueue, qIdx: 0,
+      queue, qIdx: slot,   // sequential starting photo
       get mem() { return this.queue[this.qIdx] },
     }
 
-    applyMem(card, subQueue[0])
+    applyMem(card, queue[slot])
 
     const onMove = (cx: number, cy: number) => {
       card.hit = true
@@ -511,8 +509,9 @@ export async function renderTimeline(): Promise<HTMLElement> {
   for (let lane = 0 as 0 | 1; lane < 2; lane++) {
     const q     = laneQueues[lane]
     const count = Math.min(VISIBLE_PER_LANE, q.length)
+    laneNextIdx[lane] = count   // next photo after the initial count slots
     for (let slot = 0; slot < count; slot++) {
-      allCards.push(makeCard(makeSubQueue(q, slot, count), slot, count, lane))
+      allCards.push(makeCard(q, slot, count, lane))
     }
   }
 
@@ -528,10 +527,10 @@ export async function renderTimeline(): Promise<HTMLElement> {
       // t always advances — preserves even spacing even during hover
       const nextT = c.t + SPEED
       if (nextT >= 1) {
-        // Card exits screen right — swap photo then snap curX/curY off-screen left
-        // (no lerp across the visible area)
+        // Card exits screen right — assign next sequential photo and snap off-screen left
         if (c.queue.length > 1) {
-          c.qIdx = (c.qIdx + 1) % c.queue.length
+          c.qIdx = laneNextIdx[c.lane] % c.queue.length
+          laneNextIdx[c.lane]++
           applyMem(c, c.queue[c.qIdx])
         }
         c.t = nextT % 1
