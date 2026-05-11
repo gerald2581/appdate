@@ -334,8 +334,19 @@ export async function renderTimeline(): Promise<HTMLElement> {
         </div>
         <div style="padding:10px 24px max(20px,env(safe-area-inset-bottom,20px));
                     flex-shrink:0;text-align:center">
-          <p style="font-size:13px;font-weight:600;color:#1a1916;margin:0 0 3px">${esc(m.title)}</p>
-          <time style="font-size:12px;color:#9a9088;letter-spacing:.06em">
+          <p style="font-size:13px;font-weight:600;color:#1a1916;margin:0 0 6px">
+            ${esc(m.title)}
+          </p>
+          ${m.description ? `
+          <p style="
+            font-family:'Playfair Display',Georgia,serif;
+            font-size:12px;font-style:italic;
+            color:#c8826a;line-height:1.6;
+            margin:0 0 6px;letter-spacing:.01em;
+            opacity:0.85;
+          ">${esc(m.description)}</p>
+          ` : ''}
+          <time style="font-size:11px;color:#9a9088;letter-spacing:.06em">
             ${esc(formatDate(m.memory_date))}
           </time>
         </div>
@@ -386,7 +397,16 @@ export async function renderTimeline(): Promise<HTMLElement> {
                      line-height:1.25;margin-bottom:${m.description ? '10px' : '0'}">
             ${esc(m.title)}
           </h2>
-          ${m.description ? `<p style="font-size:14px;color:#6b6860;line-height:1.7">${esc(m.description)}</p>` : ''}
+          ${m.description ? `
+          <p style="
+            font-family:'Playfair Display',Georgia,serif;
+            font-size:14px;font-style:italic;
+            color:#c8826a;line-height:1.75;
+            margin-top:8px;opacity:0.9;
+            border-left:2px solid rgba(200,130,106,0.25);
+            padding-left:12px;
+          ">${esc(m.description)}</p>
+          ` : ''}
         </div>
         <div style="padding:0 24px 32px">
           <button id="btn-delete-memory"
@@ -519,6 +539,12 @@ export async function renderTimeline(): Promise<HTMLElement> {
   let rafId = 0
 
   const tick = () => {
+    if (!wrapper.isConnected) {
+      cancelAnimationFrame(rafId)
+      overlay.remove()
+      return
+    }
+
     const CW = Math.min(window.innerWidth, 430)
     const CH = window.innerHeight
     lanes = buildLanes(CW, CH)
@@ -581,16 +607,6 @@ export async function renderTimeline(): Promise<HTMLElement> {
   }
 
   rafId = requestAnimationFrame(tick)
-
-  // Cleanup on unmount
-  const obs = new MutationObserver(() => {
-    if (!wrapper.isConnected) {
-      cancelAnimationFrame(rafId)
-      overlay.remove()
-      obs.disconnect()
-    }
-  })
-  obs.observe(document.body, { childList: true, subtree: false })
 
   header.querySelector('#btn-add')!.addEventListener('click', () => navigate('/timeline/add'))
   wrapper.appendChild(renderNav())

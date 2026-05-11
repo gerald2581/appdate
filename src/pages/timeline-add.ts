@@ -4,6 +4,7 @@ import { navigate } from '../router'
 import { uploadPhoto } from '../lib/storage'
 import { showToast } from '../components/toast'
 import { todayISO } from '../lib/date-utils'
+import { pickCaption } from '../lib/captions'
 
 export function renderTimelineAdd(): HTMLElement {
   const wrapper = document.createElement('div')
@@ -67,12 +68,6 @@ export function renderTimelineAdd(): HTMLElement {
             <label class="text-sm font-medium text-ink" for="date">Tanggal *</label>
             <input id="date" class="field" type="date" value="${todayISO()}" max="${todayISO()}" required />
           </div>
-        </div>
-
-        <!-- Description -->
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium text-ink" for="description">Cerita (opsional)</label>
-          <textarea id="description" class="field" rows="3" placeholder="Tulis cerita di balik momen ini..."></textarea>
         </div>
 
         <p id="error" class="text-sm text-danger hidden"></p>
@@ -158,10 +153,9 @@ export function renderTimelineAdd(): HTMLElement {
     submitBtn.disabled = true
     errorEl.classList.add('hidden')
 
-    const title       = (wrapper.querySelector('#title') as HTMLInputElement).value.trim()
-    const type        = (wrapper.querySelector('#type') as HTMLSelectElement).value
-    const date        = (wrapper.querySelector('#date') as HTMLInputElement).value
-    const description = (wrapper.querySelector('#description') as HTMLTextAreaElement).value.trim()
+    const title = (wrapper.querySelector('#title') as HTMLInputElement).value.trim()
+    const type  = (wrapper.querySelector('#type') as HTMLSelectElement).value
+    const date  = (wrapper.querySelector('#date') as HTMLInputElement).value
 
     if (!title) {
       errorEl.textContent = 'Judul wajib diisi'
@@ -200,7 +194,7 @@ export function renderTimelineAdd(): HTMLElement {
           title:       i === 0 ? title : `${title} (${i + 1})`,
           type,
           memory_date: date,
-          description: i === 0 ? (description || null) : null,
+          description: pickCaption(),
           photo_path:  photoPath,
           created_by:  user.id,
         }))
@@ -217,7 +211,7 @@ export function renderTimelineAdd(): HTMLElement {
           title,
           type,
           memory_date: date,
-          description: description || null,
+          description: pickCaption(),
           photo_path:  null,
           created_by:  user.id,
         })
