@@ -20,6 +20,8 @@ const LERP_S           = 0.024
 const LERP_P           = 0.048
 const LERP_R           = 0.08
 const SPEED            = 0.00042
+// Duration of one full circuit in ms — used to sync position across devices
+const CYCLE_MS         = Math.round(1000 / (SPEED * 60))
 const HEADER_H         = 160
 const NAV_H            = 84
 const VISIBLE_PER_LANE = 7
@@ -66,6 +68,9 @@ interface Card {
   inner: HTMLDivElement
   lane: 0 | 1
   t: number
+  phase: number      // fixed 0..1 offset — keeps cards evenly spaced
+  phaseSlot: number  // integer slot for photo cycling
+  lastCycle: number  // last seen CYCLE_MS count — detects photo advance
   curS: number; curO: number
   curX: number; curY: number
   rX: number; rY: number
@@ -464,16 +469,18 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
   const allCards: Card[] = []
 
-  // Per-lane counter: next sequential photo to assign when a card wraps off-screen
-  // Starts at `count` because slots 0..count-1 are assigned at creation time
-  const laneNextIdx: [number, number] = [0, 0]
-
   const makeCard = (queue: MemWithUrl[], slot: number, totalCount: number, laneId: 0 | 1): Card => {
-    const t     = totalCount > 1 ? slot / totalCount : 0.25
+    // phase: fixed fractional offset — same value on every device for this slot
+    const phase = totalCount > 1 ? slot / totalCount : 0.25
+    // t from current UTC time so all devices start at the same position
+    const t     = ((Date.now() / CYCLE_MS) + phase) % 1
     const pos   = bezAt(t, lanes[laneId])
     const d     = Math.abs(t - 0.5) * 2
     const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
     const initO = lerp(1.0, 0.55, d)
+    // photo index synced to current cycle count
+    const initCycle = Math.floor(Date.now() / CYCLE_MS)
+    const initQIdx  = queue.length > 1 ? (slot + initCycle) % queue.length : 0
 
     const el = document.createElement('div')
     el.style.cssText = `
@@ -502,16 +509,18 @@ export async function renderTimeline(): Promise<HTMLElement> {
     const card: Card = {
       el, inner,
       lane: laneId, t,
+      phase, phaseSlot: slot,
+      lastCycle: Math.floor(Date.now() / CYCLE_MS),
       curS: initS, curO: initO,
       curX: pos.x, curY: pos.y,
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
       rgb: GLOW[slot % GLOW.length],
-      queue, qIdx: slot,   // sequential starting photo
+      queue, qIdx: initQIdx,
       get mem() { return this.queue[this.qIdx] },
     }
 
-    applyMem(card, queue[slot])
+    applyMem(card, queue[initQIdx])
 
     const onMove = (cx: number, cy: number) => {
       card.hit = true
@@ -538,7 +547,6 @@ export async function renderTimeline(): Promise<HTMLElement> {
   for (let lane = 0 as 0 | 1; lane < 2; lane++) {
     const q     = laneQueues[lane]
     const count = Math.min(VISIBLE_PER_LANE, q.length)
-    laneNextIdx[lane] = count   // next photo after the initial count slots
     for (let slot = 0; slot < count; slot++) {
       allCards.push(makeCard(q, slot, count, lane))
     }
@@ -559,21 +567,25 @@ export async function renderTimeline(): Promise<HTMLElement> {
     lanes = buildLanes(CW, CH)
 
     for (const c of allCards) {
-      // t always advances — preserves even spacing even during hover
-      const nextT = c.t + SPEED
-      if (nextT >= 1) {
-        // Card exits screen right — assign next sequential photo and snap off-screen left
-        if (c.queue.length > 1) {
-          c.qIdx = laneNextIdx[c.lane] % c.queue.length
-          laneNextIdx[c.lane]++
-          applyMem(c, c.queue[c.qIdx])
-        }
-        c.t = nextT % 1
-        const snap = bezAt(c.t, lanes[c.lane])
+      // t from UTC time — identical on all devices at the same moment
+      const rawT = ((Date.now() / CYCLE_MS) + c.phase) % 1
+
+      // Detect wrap (card crossed the right edge → snap to left)
+      if (c.t > 0.85 && rawT < 0.15) {
+        const snap = bezAt(rawT, lanes[c.lane])
         c.curX = snap.x
         c.curY = snap.y
-      } else {
-        c.t = nextT
+      }
+      c.t = rawT
+
+      // Advance photo when a new cycle begins — all devices advance in sync
+      const cycleNow = Math.floor(Date.now() / CYCLE_MS)
+      if (cycleNow !== c.lastCycle) {
+        c.lastCycle = cycleNow
+        if (c.queue.length > 1) {
+          c.qIdx = (c.phaseSlot + cycleNow) % c.queue.length
+          applyMem(c, c.queue[c.qIdx])
+        }
       }
 
       const target = bezAt(c.t, lanes[c.lane])
