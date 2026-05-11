@@ -16,11 +16,11 @@ const MAX_SCALE = 1.30
 const MIN_SCALE = 0.28
 const LERP_SCL  = 0.036
 const LERP_ROT  = 0.09
-const SPEED     = 0.00090   // all cards same speed so spacing stays fixed (~18s loop)
+const SPEED     = 0.00090   // same speed for all → spacing stays fixed
 const HEADER_H  = 160
 const NAV_H     = 84
-// Gap between cards on the 0–1 path. 0.12 = ~8 cards visible at once
-const T_STEP    = 0.12
+// Gap between cards per lane. 0.20 = 5 slots per lane → clearly separated
+const T_STEP    = 0.20
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
@@ -29,14 +29,30 @@ const GLOW: readonly string[] = [
 
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 
-// ── Single horizontal conveyor lane ──────────────────────────
-function laneX(t: number, W: number): number {
-  // linear: x goes from -CARD_W (t=0) to W+CARD_W (t=1)
-  return -CARD_W + t * (W + CARD_W * 2)
+// ── Two bezier circuit lanes ──────────────────────────────────
+interface Pt   { x: number; y: number }
+interface Lane { p0: Pt; p1: Pt; p2: Pt }
+
+function pathBez(t: number, { p0, p1, p2 }: Lane): Pt {
+  const u = 1 - t
+  return {
+    x: u*u*p0.x + 2*u*t*p1.x + t*t*p2.x,
+    y: u*u*p0.y + 2*u*t*p1.y + t*t*p2.y,
+  }
 }
 
-function laneY(H: number): number {
-  return (HEADER_H + H - NAV_H) / 2   // vertical center of usable zone
+function buildLanes(W: number, H: number): [Lane, Lane] {
+  const mid = (HEADER_H + H - NAV_H) / 2
+  return [
+    // Lane 0 (top): left-mid → arcs UP at center → right-mid
+    { p0:{x:-CARD_W,   y:mid - CARD_H*0.6},
+      p1:{x:W*0.5,     y:HEADER_H + 10},
+      p2:{x:W+CARD_W,  y:mid - CARD_H*0.6} },
+    // Lane 1 (bottom): right-mid → arcs DOWN at center → left-mid
+    { p0:{x:W+CARD_W,  y:mid + CARD_H*0.6},
+      p1:{x:W*0.5,     y:H - NAV_H - 10},
+      p2:{x:-CARD_W,   y:mid + CARD_H*0.6} },
+  ]
 }
 
 // ── Per-card state ────────────────────────────────────────────
@@ -45,6 +61,7 @@ interface PhysCard {
   el: HTMLDivElement
   inner: HTMLDivElement
   rgb: string
+  lane: 0 | 1
   t: number        // 0..1 position along lane
   curS: number; curO: number
   rX: number; rY: number
@@ -508,12 +525,16 @@ export async function renderTimeline(): Promise<HTMLElement> {
   // ── Build cards ───────────────────────────────────────────────
   const W = Math.min(window.innerWidth, 430)
   const H = window.innerHeight
+  let lanes = buildLanes(W, H)
+
+  const half = Math.ceil(mems.length / 2)
 
   const cards: PhysCard[] = mems.map((m, i) => {
-    const t     = (i * T_STEP) % 1   // evenly spread; same step for everyone
-    const initX = laneX(t, W)
-    const initY = laneY(H)
-    const d     = Math.abs(t - 0.5) * 2
+    const lane = (i < half ? 0 : 1) as 0 | 1
+    const slot = i < half ? i : i - half
+    const t    = (slot * T_STEP) % 1
+    const pos  = pathBez(t, lanes[lane])
+    const d    = Math.abs(t - 0.5) * 2
     const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
     const initO = lerp(1.0, 0.38, d)
 
@@ -590,14 +611,14 @@ export async function renderTimeline(): Promise<HTMLElement> {
     el.addEventListener('click', () => openDetail(m, c))
 
     // Initial transform
-    const ox0 = initX - CARD_W * (initS - 1) / 2
-    const oy0 = initY - CARD_H / 2 - CARD_H * (initS - 1) / 2
+    const ox0 = pos.x - CARD_W / 2 - CARD_W * (initS - 1) / 2
+    const oy0 = pos.y - CARD_H / 2 - CARD_H * (initS - 1) / 2
     el.style.transform = `translate(${ox0}px,${oy0}px) scale(${initS})`
     el.style.opacity   = String(initO)
 
     const c: PhysCard = {
       mem: m, el, inner, rgb,
-      t,
+      lane, t,
       curS: initS, curO: initO,
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
@@ -611,16 +632,16 @@ export async function renderTimeline(): Promise<HTMLElement> {
   const tick = () => {
     const CW = Math.min(window.innerWidth, 430)
     const CH = window.innerHeight
-    const cy = laneY(CH)
+    lanes = buildLanes(CW, CH)
 
     for (const c of cards) {
       if (!c.hit) {
         c.t = (c.t + SPEED) % 1
       }
 
-      const x = laneX(c.t, CW)
+      const pos = pathBez(c.t, lanes[c.lane])
 
-      // Scale & opacity: max at t=0.5 (screen center), min at t=0/1 (edges)
+      // Scale & opacity: max at t=0.5 (path center = screen center), min at edges
       const d  = Math.abs(c.t - 0.5) * 2
       const tS = c.hit ? MAX_SCALE + 0.18 : lerp(MAX_SCALE, MIN_SCALE, d * d)
       const tO = c.hit ? 1.0 : lerp(1.0, 0.38, d)
@@ -632,8 +653,8 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
       c.el.style.zIndex = c.hit ? '100' : String(Math.round(c.curS * 300))
 
-      const ox = x - CARD_W * (c.curS - 1) / 2
-      const oy = cy - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
+      const ox = pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
+      const oy = pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
 
       c.el.style.transform =
         `translate(${ox}px,${oy}px) ` +
