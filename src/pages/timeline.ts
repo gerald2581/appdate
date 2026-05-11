@@ -68,6 +68,8 @@ interface PhysCard {
   hit: boolean
   laneQueue: (Memory & { photoUrl: string | null })[]
   queueIdx: number
+  curX: number
+  curY: number
 }
 
 // ── Update card content when cycling to next photo ───────────
@@ -527,6 +529,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
       rgb: GLOW[slot % GLOW.length],
       lane: laneId, t,
       curS: initS, curO: initO,
+      curX: pos.x, curY: pos.y,
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
       laneQueue: lQueue,
@@ -573,32 +576,40 @@ export async function renderTimeline(): Promise<HTMLElement> {
     lanes = buildLanes(CW, CH)
 
     for (const c of cards) {
-      if (!c.hit) {
-        const nextT = c.t + SPEED
-        if (nextT >= 1 && c.laneQueue.length > 1) {
-          // Cycle to next photo in this lane's queue
-          c.queueIdx = (c.queueIdx + 1) % c.laneQueue.length
-          applyCardMem(c, c.laneQueue[c.queueIdx])
-        }
-        c.t = nextT % 1
+      // t always advances — preserves spacing even during hover
+      const nextT = c.t + SPEED
+      if (nextT >= 1 && c.laneQueue.length > 1) {
+        c.queueIdx = (c.queueIdx + 1) % c.laneQueue.length
+        applyCardMem(c, c.laneQueue[c.queueIdx])
       }
+      c.t = nextT % 1
 
-      const pos = pathBez(c.t, lanes[c.lane])
-
-      // Scale & opacity: max at t=0.5 (path center = screen center), min at edges
+      const circuitPos = pathBez(c.t, lanes[c.lane])
       const d  = Math.abs(c.t - 0.5) * 2
-      const tS = c.hit ? MAX_SCALE + 0.18 : lerp(MAX_SCALE, MIN_SCALE, d * d)
-      const tO = c.hit ? 1.0 : lerp(1.0, 0.38, d)
+      const tS = lerp(MAX_SCALE, MIN_SCALE, d * d)
+      const tO = lerp(1.0, 0.38, d)
 
-      c.curS = lerp(c.curS, tS, LERP_SCL)
-      c.curO = lerp(c.curO, tO, LERP_SCL)
-      c.rX   = lerp(c.rX, c.tRX, LERP_ROT)
-      c.rY   = lerp(c.rY, c.tRY, LERP_ROT)
+      if (c.hit) {
+        // Scale up, freeze visual position in place
+        c.curS = lerp(c.curS, MAX_SCALE + 0.18, LERP_SCL)
+        c.curO = 1.0
+        c.rX   = lerp(c.rX, c.tRX, LERP_ROT)
+        c.rY   = lerp(c.rY, c.tRY, LERP_ROT)
+        // curX / curY intentionally not updated — card stays put
+      } else {
+        // Smoothly return to circuit position
+        c.curS = lerp(c.curS, tS, LERP_SCL)
+        c.curO = lerp(c.curO, tO, LERP_SCL)
+        c.rX   = lerp(c.rX, 0, LERP_ROT)
+        c.rY   = lerp(c.rY, 0, LERP_ROT)
+        c.curX = lerp(c.curX, circuitPos.x, LERP_SCL * 2)
+        c.curY = lerp(c.curY, circuitPos.y, LERP_SCL * 2)
+      }
 
       c.el.style.zIndex = c.hit ? '9999' : String(Math.round(c.curS * 300))
 
-      const ox = pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
-      const oy = pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
+      const ox = c.curX - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
+      const oy = c.curY - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
 
       c.el.style.transform =
         `translate(${ox}px,${oy}px) ` +
