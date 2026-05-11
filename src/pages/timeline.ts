@@ -22,7 +22,7 @@ const LERP_R           = 0.08
 const SPEED            = 0.00042
 const HEADER_H         = 160
 const NAV_H            = 84
-const VISIBLE_PER_LANE = 5
+const VISIBLE_PER_LANE = 7
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
@@ -522,12 +522,20 @@ export async function renderTimeline(): Promise<HTMLElement> {
     for (const c of allCards) {
       // t always advances — preserves even spacing even during hover
       const nextT = c.t + SPEED
-      if (nextT >= 1 && c.queue.length > 1) {
-        // card exits screen right → silently swap to next photo
-        c.qIdx = (c.qIdx + 1) % c.queue.length
-        applyMem(c, c.queue[c.qIdx])
+      if (nextT >= 1) {
+        // Card exits screen right — swap photo then snap curX/curY off-screen left
+        // (no lerp across the visible area)
+        if (c.queue.length > 1) {
+          c.qIdx = (c.qIdx + 1) % c.queue.length
+          applyMem(c, c.queue[c.qIdx])
+        }
+        c.t = nextT % 1
+        const snap = bezAt(c.t, lanes[c.lane])
+        c.curX = snap.x
+        c.curY = snap.y
+      } else {
+        c.t = nextT
       }
-      c.t = nextT % 1
 
       const target = bezAt(c.t, lanes[c.lane])
       const d = Math.abs(c.t - 0.5) * 2
