@@ -227,7 +227,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
     overlay.style.pointerEvents = 'all'
 
     if (m.photoUrl) {
-      // ── Lightbox mode with swipe ───────────────────────
+      // ── Lightbox mode (single photo) ──────────────────
       overlay.dataset.mode = 'lightbox'
       overlay.style.background = 'rgba(253,244,240,0.90)'
       overlay.style.backdropFilter = 'blur(24px) saturate(1.3)'
@@ -249,11 +249,6 @@ export async function renderTimeline(): Promise<HTMLElement> {
       sheet.style.padding = '0'
       sheet.style.overflowY = 'hidden'
 
-      // All photo memories for swiping
-      const photoMems = mems.filter(p => p.photoUrl)
-      let lbIdx = photoMems.findIndex(p => p.id === m.id)
-      if (lbIdx < 0) lbIdx = 0
-
       const btnStyle = (danger: boolean) => `
         width:38px;height:38px;border-radius:50%;padding:0;cursor:pointer;
         background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);
@@ -262,18 +257,6 @@ export async function renderTimeline(): Promise<HTMLElement> {
         color:${danger ? '#c87878' : '#1a1916'};
         display:flex;align-items:center;justify-content:center
       `
-
-      const dotsHtml = photoMems.length > 1
-        ? `<div id="lb-dots" style="display:flex;align-items:center;justify-content:center;
-                                     gap:5px;padding:10px 0 4px;flex-shrink:0">
-            ${photoMems.map((_, i) => `
-              <div class="lb-dot" style="
-                height:6px;border-radius:99px;transition:all .25s ease;
-                width:${i === lbIdx ? '18px' : '6px'};
-                background:${i === lbIdx ? '#c8826a' : 'rgba(26,25,22,0.18)'}">
-              </div>`).join('')}
-           </div>`
-        : ''
 
       sheet.innerHTML = `
         <!-- Top bar -->
@@ -295,130 +278,47 @@ export async function renderTimeline(): Promise<HTMLElement> {
           </button>
         </div>
 
-        <!-- Swipe area -->
-        <div id="lb-slide" style="flex:1;display:flex;align-items:center;
-                                   padding:0 20px;min-height:0;touch-action:pan-y;overflow:hidden">
-          <div id="lb-frame" style="width:100%;
+        <!-- Photo -->
+        <div style="flex:1;display:flex;align-items:center;padding:0 20px;min-height:0;overflow:hidden">
+          <div style="width:100%;
                 background:rgba(255,255,255,0.68);
                 border:1px solid rgba(255,255,255,0.80);
                 box-shadow:0 4px 24px rgba(0,0,0,0.07),inset 0 1px 0 rgba(255,255,255,0.9);
-                border-radius:20px;padding:8px;
-                transition:transform .25s cubic-bezier(.32,.72,0,1),opacity .2s ease">
-            <img id="lb-img" src="${esc(photoMems[lbIdx].photoUrl!)}"
+                border-radius:20px;padding:8px">
+            <img src="${esc(m.photoUrl)}"
               style="width:100%;max-height:calc(100dvh - 180px);border-radius:13px;
                      object-fit:contain;display:block"
               alt="" />
           </div>
         </div>
 
-        ${dotsHtml}
-
-        <!-- Date -->
+        <!-- Title + Date -->
         <div style="padding:10px 24px max(20px,env(safe-area-inset-bottom,20px));
                     flex-shrink:0;text-align:center">
-          <time id="lb-date" style="font-size:12px;color:#9a9088;letter-spacing:.06em">
-            ${esc(formatDate(photoMems[lbIdx].memory_date))}
+          <p style="font-size:13px;font-weight:600;color:#1a1916;margin:0 0 3px">${esc(m.title)}</p>
+          <time style="font-size:12px;color:#9a9088;letter-spacing:.06em">
+            ${esc(formatDate(m.memory_date))}
           </time>
         </div>
       `
 
-      // ── Swipe logic ──────────────────────────────────────
-      const frameEl  = sheet.querySelector('#lb-frame') as HTMLElement
-      const imgEl    = sheet.querySelector('#lb-img') as HTMLImageElement
-      const dateEl   = sheet.querySelector('#lb-date') as HTMLElement
-      const dots     = sheet.querySelectorAll('.lb-dot')
-
-      const goTo = (nextIdx: number, dir: -1 | 1) => {
-        if (nextIdx < 0 || nextIdx >= photoMems.length) return
-
-        frameEl.style.transition = 'transform .22s ease,opacity .18s ease'
-        frameEl.style.transform = `translateX(${dir < 0 ? '-60px' : '60px'})`
-        frameEl.style.opacity = '0'
-
-        setTimeout(() => {
-          lbIdx = nextIdx
-          const nm = photoMems[lbIdx]
-          imgEl.src = nm.photoUrl!
-          dateEl.textContent = formatDate(nm.memory_date)
-
-          dots.forEach((d, i) => {
-            const el = d as HTMLElement
-            el.style.width    = i === lbIdx ? '18px' : '6px'
-            el.style.background = i === lbIdx ? '#c8826a' : 'rgba(26,25,22,0.18)'
-          })
-
-          frameEl.style.transition = 'none'
-          frameEl.style.transform  = `translateX(${dir < 0 ? '60px' : '-60px'})`
-          frameEl.style.opacity    = '0'
-
-          requestAnimationFrame(() => {
-            frameEl.style.transition = 'transform .22s ease,opacity .18s ease'
-            frameEl.style.transform  = 'translateX(0)'
-            frameEl.style.opacity    = '1'
-          })
-        }, 180)
-      }
-
-      // Touch swipe
-      let txStart = 0
-      let tyStart = 0
-      let swiping = false
-
-      const slideEl = sheet.querySelector('#lb-slide') as HTMLElement
-      slideEl.addEventListener('touchstart', e => {
-        txStart = e.touches[0].clientX
-        tyStart = e.touches[0].clientY
-        swiping = true
-      }, { passive: true })
-
-      slideEl.addEventListener('touchmove', e => {
-        if (!swiping) return
-        const dx = e.touches[0].clientX - txStart
-        const dy = e.touches[0].clientY - tyStart
-        if (Math.abs(dx) > Math.abs(dy)) {
-          frameEl.style.transition = 'none'
-          frameEl.style.transform = `translateX(${dx * 0.35}px)`
-        }
-      }, { passive: true })
-
-      slideEl.addEventListener('touchend', e => {
-        if (!swiping) return
-        swiping = false
-        const dx = e.changedTouches[0].clientX - txStart
-        const dy = e.changedTouches[0].clientY - tyStart
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 55) {
-          goTo(lbIdx + (dx < 0 ? 1 : -1), dx < 0 ? -1 : 1)
-        } else {
-          frameEl.style.transition = 'transform .2s ease'
-          frameEl.style.transform  = 'translateX(0)'
-        }
-      }, { passive: true })
-
       // Close
       sheet.querySelector('#btn-close-lb')!.addEventListener('click', closeDetail)
 
-      // Delete — always uses current lbIdx
+      // Delete
       sheet.querySelector('#btn-delete-memory')!.addEventListener('click', () => {
-        const curMem  = photoMems[lbIdx]
-        const curCard = cards.find(c => c.mem.id === curMem.id) ?? card
         openConfirmModal({
           title: 'Hapus Kenangan?',
-          message: `"${curMem.title}" akan dihapus permanen.`,
+          message: `"${m.title}" akan dihapus permanen.`,
           confirmLabel: 'Hapus',
           danger: true,
           onConfirm: async () => {
-            const { error } = await supabase.from('memories').delete().eq('id', curMem.id)
+            const { error } = await supabase.from('memories').delete().eq('id', m.id)
             if (error) throw error
-            curCard.el.remove()
-            const ci = cards.indexOf(curCard)
-            if (ci !== -1) cards.splice(ci, 1)
-            photoMems.splice(lbIdx, 1)
-            if (photoMems.length === 0) {
-              closeDetail()
-            } else {
-              lbIdx = Math.min(lbIdx, photoMems.length - 1)
-              goTo(lbIdx, -1)
-            }
+            card.el.remove()
+            const idx = cards.indexOf(card)
+            if (idx !== -1) cards.splice(idx, 1)
+            closeDetail()
             showToast('Kenangan dihapus', 'success')
           },
         })
