@@ -50,7 +50,7 @@ export async function renderHome(): Promise<HTMLElement> {
     <div class="min-h-dvh pb-[calc(64px+1.5rem)]">
 
       <!-- Hero glass card -->
-      <div class="px-4 pt-10 pb-4">
+      <div class="px-4 pt-safe-10 pb-4">
         <div class="glass-strong px-6 py-8 text-center">
 
           <!-- Partner avatars -->
@@ -249,7 +249,7 @@ function renderSoloHome(name: string): HTMLElement {
   const wrapper = document.createElement('div')
   wrapper.innerHTML = `
     <div class="min-h-dvh pb-[calc(64px+1.5rem)]">
-      <div class="px-4 pt-10 pb-4">
+      <div class="px-4 pt-safe-10 pb-4">
         <div class="glass-strong px-6 py-10 text-center">
           <p class="text-[10px] uppercase tracking-[0.2em] text-ink-muted mb-3">Selamat datang</p>
           <h1 class="font-display text-4xl text-ink mb-1">${name || 'AppDate'}</h1>

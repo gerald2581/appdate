@@ -22,7 +22,7 @@ export async function renderPlanner(): Promise<HTMLElement> {
 
   wrapper.innerHTML = `
     <div class="min-h-dvh bg-bg pb-[calc(64px+1.5rem)]">
-      <div class="px-4 pt-8 pb-6 flex justify-between items-end">
+      <div class="px-4 pt-safe-8 pb-6 flex justify-between items-end">
         <div>
           <h1 class="font-display text-2xl text-ink">Rencana Kencan</h1>
           <p class="text-sm text-ink-muted mt-0.5">${planned.length} rencana menanti</p>

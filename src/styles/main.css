@@ -25,6 +25,16 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
+  #app {
+    min-height: 100dvh;
+    background:
+      radial-gradient(ellipse at top left,    rgba(255,200,180,0.55) 0%, transparent 55%),
+      radial-gradient(ellipse at top right,   rgba(200,170,220,0.40) 0%, transparent 55%),
+      radial-gradient(ellipse at bottom,      rgba(255,220,160,0.45) 0%, transparent 60%),
+      #fdf4f0;
+    background-attachment: fixed;
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
@@ -121,4 +131,14 @@
     border-top: 1px solid rgba(255, 255, 255, 0.6);
     box-shadow: 0 -4px 24px rgba(0,0,0,0.06);
   }
+}
+
+/* ── Safe-area padding utilities ───────────────────────────── */
+@layer utilities {
+  .pt-safe-4  { padding-top: calc(env(safe-area-inset-top, 0px) + 1rem); }
+  .pt-safe-6  { padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem); }
+  .pt-safe-8  { padding-top: calc(env(safe-area-inset-top, 0px) + 2rem); }
+  .pt-safe-10 { padding-top: calc(env(safe-area-inset-top, 0px) + 2.5rem); }
+  .pt-safe-12 { padding-top: calc(env(safe-area-inset-top, 0px) + 3rem); }
+  .pb-safe-4  { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem); }
 }

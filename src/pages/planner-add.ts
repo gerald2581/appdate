@@ -10,7 +10,7 @@ export function renderPlannerAdd(): HTMLElement {
 
   wrapper.innerHTML = `
     <div class="min-h-dvh bg-bg">
-      <div class="flex items-center gap-3 px-4 pt-8 pb-6">
+      <div class="flex items-center gap-3 px-4 pt-safe-8 pb-6">
         <button id="btn-back"
           class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-ink-muted hover:bg-surface-2 cursor-pointer bg-transparent flex-shrink-0">
           ←

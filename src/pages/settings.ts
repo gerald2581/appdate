@@ -56,7 +56,7 @@ export async function renderSettings(): Promise<HTMLElement> {
     <div class="min-h-dvh pb-[calc(64px+2rem)]">
 
       <!-- ── PAGE HEADER ───────────────────────────────────── -->
-      <div class="px-5 pt-10 pb-5">
+      <div class="px-5 pt-safe-10 pb-5">
         <p class="text-[10px] uppercase tracking-[0.25em] font-medium mb-1" style="color:#c8826a">AppDate</p>
         <h1 class="font-display text-3xl" style="color:#1a1916">Pengaturan</h1>
       </div>

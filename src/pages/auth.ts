@@ -3,7 +3,7 @@ import { navigate } from '../router'
 
 export function renderAuth(): HTMLElement {
   const page = document.createElement('div')
-  page.className = 'min-h-dvh flex flex-col justify-center px-5 py-12'
+  page.className = 'min-h-dvh flex flex-col justify-center px-5 pb-12 pt-safe-12'
 
   let isLogin = true
 

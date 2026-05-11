@@ -14,7 +14,7 @@ export function renderTimelineAdd(): HTMLElement {
 
   wrapper.innerHTML = `
     <div class="min-h-dvh bg-bg">
-      <div class="flex items-center gap-3 px-4 pt-8 pb-6">
+      <div class="flex items-center gap-3 px-4 pt-safe-8 pb-6">
         <button id="btn-back"
           class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-ink-muted hover:bg-surface-2 cursor-pointer bg-transparent flex-shrink-0">
           ←
@@ -94,31 +94,60 @@ export function renderTimelineAdd(): HTMLElement {
   const progressLabel = wrapper.querySelector('#progress-label') as HTMLElement
   const progressCount = wrapper.querySelector('#progress-count') as HTMLElement
 
-  // Photo preview grid
-  photoInput.addEventListener('change', () => {
-    selectedFiles = Array.from(photoInput.files ?? [])
-    if (selectedFiles.length === 0) return
+  const MAX_PHOTOS  = 20
+  const PREVIEW_MAX = 9
+  const previewUrls: string[] = []
 
-    if (selectedFiles.length === 1) {
-      const url = URL.createObjectURL(selectedFiles[0])
-      photoZone.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-xl" />`
+  const revokePreviewUrls = () => {
+    previewUrls.forEach(u => URL.revokeObjectURL(u))
+    previewUrls.length = 0
+  }
+
+  // Photo preview grid — shows up to PREVIEW_MAX thumbs, revokes old URLs
+  photoInput.addEventListener('change', () => {
+    const raw = Array.from(photoInput.files ?? [])
+    if (raw.length === 0) return
+
+    if (raw.length > MAX_PHOTOS) {
+      showToast(`Maksimal ${MAX_PHOTOS} foto sekaligus`, 'error')
+      photoInput.value = ''
+      return
+    }
+
+    revokePreviewUrls()
+    selectedFiles = raw
+
+    const previewed = raw.slice(0, PREVIEW_MAX)
+    previewed.forEach(f => previewUrls.push(URL.createObjectURL(f)))
+
+    if (raw.length === 1) {
+      photoZone.innerHTML = `<img src="${previewUrls[0]}" class="w-full h-full object-cover rounded-xl" />`
     } else {
-      const cols = Math.min(selectedFiles.length, 3)
+      const extra  = raw.length - previewed.length
+      const cols   = Math.min(previewed.length, 3)
+      const items  = previewed.map((_, i) => {
+        const isLast = extra > 0 && i === previewed.length - 1
+        return `<div class="aspect-square rounded-xl overflow-hidden bg-surface-2 relative">
+          <img src="${previewUrls[i]}" class="w-full h-full object-cover" />
+          ${isLast ? `<div class="absolute inset-0 flex items-center justify-center rounded-xl"
+              style="background:rgba(26,25,22,0.55)">
+            <span class="text-white text-sm font-bold">+${extra + 1}</span>
+          </div>` : ''}
+        </div>`
+      }).join('')
       photoZone.innerHTML = `
         <div class="grid gap-1.5 w-full" style="grid-template-columns: repeat(${cols}, 1fr)">
-          ${selectedFiles.map(f => {
-            const url = URL.createObjectURL(f)
-            return `<div class="aspect-square rounded-xl overflow-hidden bg-surface-2">
-              <img src="${url}" class="w-full h-full object-cover" />
-            </div>`
-          }).join('')}
+          ${items}
         </div>
-        <p class="text-xs text-ink-muted mt-2">${selectedFiles.length} foto dipilih</p>
+        <p class="text-xs text-ink-muted mt-2">${raw.length} foto dipilih</p>
       `
     }
   })
 
-  wrapper.querySelector('#btn-back')!.addEventListener('click', () => navigate('/timeline'))
+  wrapper.querySelector('#btn-back')!.addEventListener('click', () => {
+    revokePreviewUrls()
+    navigate('/timeline')
+  })
 
   const form      = wrapper.querySelector('#form') as HTMLFormElement
   const submitBtn = wrapper.querySelector('#btn-submit') as HTMLButtonElement
@@ -196,6 +225,7 @@ export function renderTimelineAdd(): HTMLElement {
         showToast('Kenangan tersimpan ✦', 'success')
       }
 
+      revokePreviewUrls()
       navigate('/timeline')
     } catch (err: unknown) {
       progressWrap.classList.add('hidden')

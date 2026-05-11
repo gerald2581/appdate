@@ -27,7 +27,7 @@ export function renderNav(): HTMLElement {
     display: flex;
     align-items: center;
     overflow: visible;
-    z-index: 50;
+    z-index: 300;
     background: rgba(255,255,255,0.82);
     backdrop-filter: blur(24px) saturate(1.5);
     -webkit-backdrop-filter: blur(24px) saturate(1.5);

@@ -10,7 +10,7 @@ type Step = 'choice' | 'invite' | 'connect' | 'date'
 
 export async function renderOnboarding(): Promise<HTMLElement> {
   const page = document.createElement('div')
-  page.className = 'min-h-dvh flex flex-col justify-center px-6 py-12 bg-bg'
+  page.className = 'min-h-dvh flex flex-col justify-center px-6 pb-12 pt-safe-12 bg-bg'
 
   const user = getState().user!
   let step: Step = 'choice'
