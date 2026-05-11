@@ -10,17 +10,16 @@ import { showToast } from '../components/toast'
 import type { Memory } from '../types'
 
 // ── Physics constants ─────────────────────────────────────────
-const CARD_W    = 82
-const CARD_H    = 82
-const MAX_SCALE = 1.30
-const MIN_SCALE = 0.28
-const LERP_SCL  = 0.036
-const LERP_ROT  = 0.09
-const SPEED     = 0.00090   // same speed for all → spacing stays fixed
-const HEADER_H  = 160
-const NAV_H     = 84
-// Gap between cards per lane
-const T_STEP    = 0.10
+const CARD_W           = 82
+const CARD_H           = 82
+const MAX_SCALE        = 1.30
+const MIN_SCALE        = 0.28
+const LERP_SCL         = 0.022
+const LERP_ROT         = 0.07
+const SPEED            = 0.00028  // slow & smooth
+const HEADER_H         = 160
+const NAV_H            = 84
+const VISIBLE_PER_LANE = 8        // cards on screen per lane; rest cycle in
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
@@ -67,6 +66,45 @@ interface PhysCard {
   rX: number; rY: number
   tRX: number; tRY: number
   hit: boolean
+  laneQueue: (Memory & { photoUrl: string | null })[]
+  queueIdx: number
+}
+
+// ── Update card content when cycling to next photo ───────────
+type MemWithUrl = Memory & { photoUrl: string | null }
+
+function applyCardMem(c: PhysCard, m: MemWithUrl) {
+  c.mem = m
+  c.inner.innerHTML = ''
+  if (m.photoUrl) {
+    const img = document.createElement('img')
+    img.src = m.photoUrl
+    img.draggable = false
+    img.loading = 'lazy'
+    img.style.cssText = `
+      width:100%;height:100%;object-fit:cover;
+      border-radius:13px;display:block;
+      pointer-events:none;user-select:none;
+    `
+    c.inner.appendChild(img)
+  } else {
+    const txt = document.createElement('div')
+    txt.style.cssText = `
+      width:100%;height:100%;border-radius:13px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:10px;text-align:center;
+      background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
+    `
+    const icon = document.createElement('span')
+    icon.style.cssText = 'font-size:18px;margin-bottom:5px;opacity:.7'
+    icon.textContent = '✦'
+    const title = document.createElement('span')
+    title.style.cssText = 'font-size:8.5px;font-weight:700;color:#c8826a;text-transform:uppercase;letter-spacing:.09em;line-height:1.35'
+    title.textContent = m.title.length > 18 ? m.title.slice(0, 18) + '…' : m.title
+    txt.appendChild(icon)
+    txt.appendChild(title)
+    c.inner.appendChild(txt)
+  }
 }
 
 // ── Main render ───────────────────────────────────────────────
@@ -318,6 +356,14 @@ export async function renderTimeline(): Promise<HTMLElement> {
             card.el.remove()
             const idx = cards.indexOf(card)
             if (idx !== -1) cards.splice(idx, 1)
+            for (const c of cards) {
+              const qi = c.laneQueue.findIndex(lm => lm.id === m.id)
+              if (qi !== -1) {
+                c.laneQueue.splice(qi, 1)
+                if (c.queueIdx >= c.laneQueue.length && c.laneQueue.length > 0)
+                  c.queueIdx = c.queueIdx % c.laneQueue.length
+              }
+            }
             closeDetail()
             showToast('Kenangan dihapus', 'success')
           },
@@ -378,6 +424,14 @@ export async function renderTimeline(): Promise<HTMLElement> {
             card.el.remove()
             const idx = cards.indexOf(card)
             if (idx !== -1) cards.splice(idx, 1)
+            for (const c of cards) {
+              const qi = c.laneQueue.findIndex(lm => lm.id === m.id)
+              if (qi !== -1) {
+                c.laneQueue.splice(qi, 1)
+                if (c.queueIdx >= c.laneQueue.length && c.laneQueue.length > 0)
+                  c.queueIdx = c.queueIdx % c.laneQueue.length
+              }
+            }
             closeDetail()
             showToast('Kenangan dihapus', 'success')
           },
@@ -427,19 +481,21 @@ export async function renderTimeline(): Promise<HTMLElement> {
   const H = window.innerHeight
   let lanes = buildLanes(W, H)
 
-  const half       = Math.ceil(mems.length / 2)
-  const lane0Count = half
-  const lane1Count = mems.length - half
+  // Split mems into two lane queues (interleaved so similar dates spread across lanes)
+  const laneQueues: [MemWithUrl[], MemWithUrl[]] = [[], []]
+  mems.forEach((m, i) => laneQueues[i % 2].push(m))
 
-  const cards: PhysCard[] = mems.map((m, i) => {
-    const lane      = (i < half ? 0 : 1) as 0 | 1
-    const slot      = i < half ? i : i - half
-    const laneCount = lane === 0 ? lane0Count : lane1Count
-    const t         = laneCount > 1 ? slot / laneCount : 0.5
-    const pos  = pathBez(t, lanes[lane])
-    const d    = Math.abs(t - 0.5) * 2
-    const initS = lerp(MAX_SCALE, MIN_SCALE, d * d)
-    const initO = lerp(1.0, 0.38, d)
+  const makeCard = (
+    lQueue: MemWithUrl[],
+    slot: number,
+    laneId: 0 | 1,
+  ): PhysCard => {
+    const visCount = Math.min(VISIBLE_PER_LANE, lQueue.length)
+    const t        = visCount > 1 ? slot / visCount : 0.5
+    const pos      = pathBez(t, lanes[laneId])
+    const d        = Math.abs(t - 0.5) * 2
+    const initS    = lerp(MAX_SCALE, MIN_SCALE, d * d)
+    const initO    = lerp(1.0, 0.38, d)
 
     const el = document.createElement('div')
     el.style.cssText = `
@@ -458,42 +514,27 @@ export async function renderTimeline(): Promise<HTMLElement> {
       padding:3px;
     `
 
-    if (m.photoUrl) {
-      const img = document.createElement('img')
-      img.src = m.photoUrl
-      img.draggable = false
-      img.loading = 'lazy'
-      img.style.cssText = `
-        width:100%;height:100%;object-fit:cover;
-        border-radius:13px;display:block;
-        pointer-events:none;user-select:none;
-      `
-      inner.appendChild(img)
-    } else {
-      const txt = document.createElement('div')
-      txt.style.cssText = `
-        width:100%;height:100%;border-radius:13px;
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        padding:10px;text-align:center;
-        background:linear-gradient(135deg,rgba(200,130,106,0.14),rgba(200,130,106,0.06));
-      `
-      const iconSpan = document.createElement('span')
-      iconSpan.style.cssText = 'font-size:18px;margin-bottom:5px;opacity:.7'
-      iconSpan.textContent = '✦'
-      const titleSpan = document.createElement('span')
-      titleSpan.style.cssText = 'font-size:8.5px;font-weight:700;color:#c8826a;text-transform:uppercase;letter-spacing:.09em;line-height:1.35'
-      titleSpan.textContent = m.title.length > 18 ? m.title.slice(0, 18) + '…' : m.title
-      txt.appendChild(iconSpan)
-      txt.appendChild(titleSpan)
-      inner.appendChild(txt)
-    }
-
     el.appendChild(inner)
     canvas.appendChild(el)
 
-    const rgb = GLOW[i % GLOW.length]
+    const ox0 = pos.x - CARD_W / 2 - CARD_W * (initS - 1) / 2
+    const oy0 = pos.y - CARD_H / 2 - CARD_H * (initS - 1) / 2
+    el.style.transform = `translate(${ox0}px,${oy0}px) scale(${initS})`
+    el.style.opacity   = String(initO)
 
-    // Touch/mouse events
+    const c: PhysCard = {
+      mem: lQueue[slot], el, inner,
+      rgb: GLOW[slot % GLOW.length],
+      lane: laneId, t,
+      curS: initS, curO: initO,
+      rX: 0, rY: 0, tRX: 0, tRY: 0,
+      hit: false,
+      laneQueue: lQueue,
+      queueIdx: slot,
+    }
+
+    applyCardMem(c, lQueue[slot])
+
     const onMove = (cx: number, cy: number) => {
       c.hit = true
       const r  = el.getBoundingClientRect()
@@ -511,23 +552,17 @@ export async function renderTimeline(): Promise<HTMLElement> {
       onMove(e.touches[0].clientX, e.touches[0].clientY)
     }, { passive: false })
     el.addEventListener('touchend', onEnd)
-    el.addEventListener('click', () => openDetail(m, c))
+    el.addEventListener('click', () => openDetail(c.mem, c))
 
-    // Initial transform
-    const ox0 = pos.x - CARD_W / 2 - CARD_W * (initS - 1) / 2
-    const oy0 = pos.y - CARD_H / 2 - CARD_H * (initS - 1) / 2
-    el.style.transform = `translate(${ox0}px,${oy0}px) scale(${initS})`
-    el.style.opacity   = String(initO)
-
-    const c: PhysCard = {
-      mem: m, el, inner, rgb,
-      lane, t,
-      curS: initS, curO: initO,
-      rX: 0, rY: 0, tRX: 0, tRY: 0,
-      hit: false,
-    }
     return c
-  })
+  }
+
+  const cards: PhysCard[] = [
+    ...Array.from({ length: Math.min(VISIBLE_PER_LANE, laneQueues[0].length) },
+      (_, slot) => makeCard(laneQueues[0], slot, 0)),
+    ...Array.from({ length: Math.min(VISIBLE_PER_LANE, laneQueues[1].length) },
+      (_, slot) => makeCard(laneQueues[1], slot, 1)),
+  ]
 
   // ── RAF loop ──────────────────────────────────────────────────
   let rafId = 0
@@ -539,7 +574,13 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
     for (const c of cards) {
       if (!c.hit) {
-        c.t = (c.t + SPEED) % 1
+        const nextT = c.t + SPEED
+        if (nextT >= 1 && c.laneQueue.length > 1) {
+          // Cycle to next photo in this lane's queue
+          c.queueIdx = (c.queueIdx + 1) % c.laneQueue.length
+          applyCardMem(c, c.laneQueue[c.queueIdx])
+        }
+        c.t = nextT % 1
       }
 
       const pos = pathBez(c.t, lanes[c.lane])
