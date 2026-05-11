@@ -1,4 +1,4 @@
-import{i as e,o as t}from"./router-SnC_tAPp.js";import{r as n}from"./index-BKN2W0tb.js";import{t as r}from"./nav-JQzAyBuE.js";import{t as i}from"./escape-1QVFIIou.js";async function a(){let n=document.createElement(`div`),{user:a,partner:s,couple_id:c}=e();if(!a||!c)return n;let{data:l}=await t.from(`messages`).select(`*`).eq(`couple_id`,c).order(`created_at`,{ascending:!1}).limit(50),u=(l??[]).reverse(),d=s?i(s.name.charAt(0).toUpperCase()):`?`,f=i(s?.name??`Partner`);n.innerHTML=`
+import{i as e,o as t}from"./router-SnC_tAPp.js";import{r as n}from"./index-BSKIVpEi.js";import{t as r}from"./nav-JQzAyBuE.js";import{t as i}from"./escape-1QVFIIou.js";async function a(){let n=document.createElement(`div`),{user:a,partner:s,couple_id:c}=e();if(!a||!c)return n;let{data:l}=await t.from(`messages`).select(`*`).eq(`couple_id`,c).order(`created_at`,{ascending:!1}).limit(50),u=(l??[]).reverse(),d=s?i(s.name.charAt(0).toUpperCase()):`?`,f=i(s?.name??`Partner`);n.innerHTML=`
     <div class="flex flex-col bg-bg" style="height:100dvh">
 
       <!-- Header -->
