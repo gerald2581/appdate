@@ -17,8 +17,21 @@
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body:    'Inter', system-ui, -apple-system, sans-serif;
 
-  --spacing-nav: 64px;
+  /* Spacing scale — 8px grid */
+  --sp-1:  8px;
+  --sp-2:  16px;
+  --sp-3:  24px;
+  --sp-4:  32px;
+  --sp-5:  40px;
+  --sp-6:  48px;
+
+  --spacing-nav: 72px;
   --spacing-max: 430px;
+
+  /* Border tokens */
+  --border-glass:   1px solid rgba(255,255,255,0.72);
+  --border-warm:    1px solid rgba(200,130,106,0.14);
+  --border-outline: 1px solid rgba(200,130,106,0.20);
 }
 
 /* ── Base ──────────────────────────────────────────────────── */
@@ -48,7 +61,6 @@
     min-height: 100dvh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    /* Warm romantic gradient background */
     background:
       radial-gradient(ellipse at top left,    rgba(255, 200, 180, 0.55) 0%, transparent 55%),
       radial-gradient(ellipse at top right,   rgba(200, 170, 220, 0.40) 0%, transparent 55%),
@@ -68,28 +80,36 @@
 
 /* ── Glass Components ──────────────────────────────────────── */
 @layer components {
-  /* Glass card */
+
+  /* Glass card — visible warm outline */
   .glass {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.07),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     border-radius: 20px;
+    /* Layered border: white shimmer top + warm tint bottom */
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    outline: 1px solid rgba(200, 130, 106, 0.12);
+    outline-offset: -1px;
+    box-shadow:
+      0 4px 24px rgba(200, 130, 106, 0.08),
+      0 1px 4px rgba(0, 0, 0, 0.05),
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.90);
   }
 
-  /* Stronger glass */
+  /* Stronger glass — hero card */
   .glass-strong {
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: blur(32px) saturate(1.6);
-    -webkit-backdrop-filter: blur(32px) saturate(1.6);
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    box-shadow:
-      0 8px 40px rgba(0, 0, 0, 0.09),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(32px) saturate(1.7);
+    -webkit-backdrop-filter: blur(32px) saturate(1.7);
     border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.80);
+    outline: 1px solid rgba(200, 130, 106, 0.14);
+    outline-offset: -1px;
+    box-shadow:
+      0 8px 40px rgba(200, 130, 106, 0.10),
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.95);
   }
 
   /* Input field */
@@ -98,8 +118,8 @@
            placeholder:text-ink-muted;
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid rgba(200, 130, 106, 0.16);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
   }
   .field:focus {
     background: rgba(255, 255, 255, 0.92);
@@ -123,13 +143,26 @@
     border-top-color: var(--color-accent);
   }
 
-  /* Bottom nav glass */
-  .bottom-nav {
-    background: rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border-top: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.06);
+  /* Section label — consistent across all pages */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #9a9088;
+    margin-bottom: 12px;
+  }
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, #c8826a, rgba(200,130,106,0.3));
+    flex-shrink: 0;
   }
 }
 
