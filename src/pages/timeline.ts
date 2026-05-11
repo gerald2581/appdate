@@ -562,11 +562,9 @@ export async function renderTimeline(): Promise<HTMLElement> {
       const ox = c.curX - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
       const oy = c.curY - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
 
-      c.el.style.transform =
-        `translate(${ox}px,${oy}px) ` +
-        `perspective(900px) ` +
-        `rotateX(${c.rX}deg) rotateY(${c.rY}deg) ` +
-        `scale(${c.curS})`
+      c.el.style.transform = c.hit
+        ? `translate(${ox}px,${oy}px) perspective(900px) rotateX(${c.rX}deg) rotateY(${c.rY}deg) scale(${c.curS})`
+        : `translate(${ox}px,${oy}px) scale(${c.curS})`
 
       c.el.style.opacity = String(c.curO)
 
