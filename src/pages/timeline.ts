@@ -19,7 +19,7 @@ const LERP_ROT         = 0.07
 const SPEED            = 0.00048  // 5/10
 const HEADER_H         = 160
 const NAV_H            = 84
-
+const VISIBLE_PER_LANE = 8        // cards on screen per lane; rest cycle in
 
 const GLOW: readonly string[] = [
   '200,130,106', '122,158,200', '106,184,122',
@@ -68,8 +68,6 @@ interface PhysCard {
   hit: boolean
   laneQueue: (Memory & { photoUrl: string | null })[]
   queueIdx: number
-  curX: number
-  curY: number
 }
 
 // ── Update card content when cycling to next photo ───────────
@@ -492,7 +490,8 @@ export async function renderTimeline(): Promise<HTMLElement> {
     slot: number,
     laneId: 0 | 1,
   ): PhysCard => {
-    const t = lQueue.length > 1 ? slot / lQueue.length : 0.5
+    const visCount = Math.min(VISIBLE_PER_LANE, lQueue.length)
+    const t        = visCount > 1 ? slot / visCount : 0.5
     const pos      = pathBez(t, lanes[laneId])
     const d        = Math.abs(t - 0.5) * 2
     const initS    = lerp(MAX_SCALE, MIN_SCALE, d * d)
@@ -528,7 +527,6 @@ export async function renderTimeline(): Promise<HTMLElement> {
       rgb: GLOW[slot % GLOW.length],
       lane: laneId, t,
       curS: initS, curO: initO,
-      curX: pos.x, curY: pos.y,
       rX: 0, rY: 0, tRX: 0, tRY: 0,
       hit: false,
       laneQueue: lQueue,
@@ -560,8 +558,10 @@ export async function renderTimeline(): Promise<HTMLElement> {
   }
 
   const cards: PhysCard[] = [
-    ...laneQueues[0].map((_, slot) => makeCard(laneQueues[0], slot, 0)),
-    ...laneQueues[1].map((_, slot) => makeCard(laneQueues[1], slot, 1)),
+    ...Array.from({ length: Math.min(VISIBLE_PER_LANE, laneQueues[0].length) },
+      (_, slot) => makeCard(laneQueues[0], slot, 0)),
+    ...Array.from({ length: Math.min(VISIBLE_PER_LANE, laneQueues[1].length) },
+      (_, slot) => makeCard(laneQueues[1], slot, 1)),
   ]
 
   // ── RAF loop ──────────────────────────────────────────────────
@@ -573,35 +573,32 @@ export async function renderTimeline(): Promise<HTMLElement> {
     lanes = buildLanes(CW, CH)
 
     for (const c of cards) {
-      // t always advances — preserves spacing even during hover
-      c.t = (c.t + SPEED) % 1
-
-      const circuitPos = pathBez(c.t, lanes[c.lane])
-      const d  = Math.abs(c.t - 0.5) * 2
-      const tS = lerp(MAX_SCALE, MIN_SCALE, d * d)
-      const tO = lerp(1.0, 0.38, d)
-
-      if (c.hit) {
-        // Scale up, freeze visual position in place
-        c.curS = lerp(c.curS, MAX_SCALE + 0.18, LERP_SCL)
-        c.curO = 1.0
-        c.rX   = lerp(c.rX, c.tRX, LERP_ROT)
-        c.rY   = lerp(c.rY, c.tRY, LERP_ROT)
-        // curX / curY intentionally not updated — card stays put
-      } else {
-        // Smoothly return to circuit position
-        c.curS = lerp(c.curS, tS, LERP_SCL)
-        c.curO = lerp(c.curO, tO, LERP_SCL)
-        c.rX   = lerp(c.rX, 0, LERP_ROT)
-        c.rY   = lerp(c.rY, 0, LERP_ROT)
-        c.curX = lerp(c.curX, circuitPos.x, LERP_SCL * 2)
-        c.curY = lerp(c.curY, circuitPos.y, LERP_SCL * 2)
+      if (!c.hit) {
+        const nextT = c.t + SPEED
+        if (nextT >= 1 && c.laneQueue.length > 1) {
+          // Cycle to next photo in this lane's queue
+          c.queueIdx = (c.queueIdx + 1) % c.laneQueue.length
+          applyCardMem(c, c.laneQueue[c.queueIdx])
+        }
+        c.t = nextT % 1
       }
+
+      const pos = pathBez(c.t, lanes[c.lane])
+
+      // Scale & opacity: max at t=0.5 (path center = screen center), min at edges
+      const d  = Math.abs(c.t - 0.5) * 2
+      const tS = c.hit ? MAX_SCALE + 0.18 : lerp(MAX_SCALE, MIN_SCALE, d * d)
+      const tO = c.hit ? 1.0 : lerp(1.0, 0.38, d)
+
+      c.curS = lerp(c.curS, tS, LERP_SCL)
+      c.curO = lerp(c.curO, tO, LERP_SCL)
+      c.rX   = lerp(c.rX, c.tRX, LERP_ROT)
+      c.rY   = lerp(c.rY, c.tRY, LERP_ROT)
 
       c.el.style.zIndex = c.hit ? '9999' : String(Math.round(c.curS * 300))
 
-      const ox = c.curX - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
-      const oy = c.curY - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
+      const ox = pos.x - CARD_W / 2 - CARD_W * (c.curS - 1) / 2
+      const oy = pos.y - CARD_H / 2 - CARD_H * (c.curS - 1) / 2
 
       c.el.style.transform =
         `translate(${ox}px,${oy}px) ` +
