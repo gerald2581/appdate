@@ -551,7 +551,7 @@ export async function renderTimeline(): Promise<HTMLElement> {
       width:100%;height:100%;border-radius:16px;overflow:hidden;
       background:rgba(255,255,255,0.62);
       border:.5px solid rgba(255,255,255,0.72);
-      box-shadow:0 4px 20px rgba(0,0,0,0.07),inset 0 1px 0 rgba(255,255,255,0.9);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
       padding:3px;
     `
 
@@ -666,14 +666,11 @@ export async function renderTimeline(): Promise<HTMLElement> {
 
       if (c.hit) {
         c.inner.style.boxShadow =
-          `0 22px 60px rgba(${c.rgb},.52),` +
-          `0 0 44px rgba(${c.rgb},.30),` +
+          `0 8px 24px rgba(${c.rgb},.40),` +
+          `0 0 16px rgba(${c.rgb},.20),` +
           `inset 0 1px 0 rgba(255,255,255,.95)`
       } else {
-        const s = c.curS
-        c.inner.style.boxShadow =
-          `0 ${(s * 5).toFixed(1)}px ${(s * 22).toFixed(1)}px rgba(0,0,0,.07),` +
-          `inset 0 1px 0 rgba(255,255,255,.9)`
+        c.inner.style.boxShadow = `inset 0 1px 0 rgba(255,255,255,.9)`
       }
     }
 
