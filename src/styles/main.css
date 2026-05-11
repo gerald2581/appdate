@@ -166,46 +166,6 @@
   }
 }
 
-/* ── View Transitions ──────────────────────────────────────── */
-
-/* Body background stays fixed — excluded from page animation */
-body {
-  view-transition-name: body-bg;
-}
-
-::view-transition-old(body-bg),
-::view-transition-new(body-bg) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-/* Page content slides + fades */
-::view-transition-old(root) {
-  animation: page-exit 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
-}
-
-::view-transition-new(root) {
-  animation: page-enter 280ms cubic-bezier(0, 0, 0.2, 1) forwards;
-}
-
-@keyframes page-exit {
-  from { opacity: 1; transform: translateY(0px); }
-  to   { opacity: 0; transform: translateY(-6px); }
-}
-
-@keyframes page-enter {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0px); }
-}
-
-/* Reduce motion — respect user preference */
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0.01ms !important;
-  }
-}
-
 /* ── Safe-area padding utilities ───────────────────────────── */
 @layer utilities {
   .pt-safe-4  { padding-top: calc(env(safe-area-inset-top, 0px) + 1rem); }
